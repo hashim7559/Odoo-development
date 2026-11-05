@@ -1,0 +1,12 @@
+<?xml version="1.0"  ?>
+<odoo>
+    <menuitem id="hostel_main_menu" name="Hostel management">
+        <menuitem id="hostel_submenu_1" name="Hostel">
+            <menuitem id="hostel_room_menu" action="hostel_room_action"/>
+            <menuitem id="hostel_student_menu" action="hostel_student_action"/>
+        </menuitem>
+        <menuitem id="hostel_submenu_2" name="Settings">
+            <menuitem id="hostel_facility_menu" action="hostel_facility_action"/>
+        </menuitem>
+    </menuitem>
+</odoo>

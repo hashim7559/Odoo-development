@@ -1,0 +1,51 @@
+<?xml version="1.0"  ?>
+<odoo>
+    <record id="hostel_student_action" model="ir.actions.act_window">
+        <field name="name">Student</field>
+        <field name="res_model">hostel.student</field>
+        <field name="view_mode">list,form</field>
+    </record>
+    <record id="hostel_student_view_list" model="ir.ui.view">
+        <field name="name">hostel.student.view.list</field>
+        <field name="model">hostel.student</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="student_id"/>
+                <field name="hostel_id"/>
+                <field name="student_email"/>
+                <field name="student_phone"/>
+                <field name="student_address"/>
+                <field name="student_code"/>
+                <field name="student_dob"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="hostel_student_view_form" model="ir.ui.view">
+        <field name="name">hostel.student.view.form</field>
+        <field name="model">hostel.student</field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+                    <h1><field name="student_id"/></h1>
+                    <group>
+                        <group>
+                            <field name="hostel_id"/>
+                            <field name="partner_id"/>
+                            <field name="student_email"/>
+                            <field name="student_phone"/>
+                        </group>
+                        <group>
+                            <field name="student_address"/>
+                            <field name="student_code"/>
+                            <field name="student_dob"/>
+                            <field name="student_age"/>
+                            <field name="room_id"/>
+                        </group>
+                    </group>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+</odoo>

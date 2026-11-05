@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <data noupdate="1">
+        <record id="hostel_room_seq" model="ir.sequence">
+            <field name="name">hostel room Sequence</field>
+            <field name="code">hostel.room.sequence</field>
+            <field name="prefix">HS/ROOM/</field>
+            <field name="padding">4</field>
+            <field name="number_next">1</field>
+            <field name="number_increment">1</field>
+        </record>
+        <record id="hostel_student_seq" model="ir.sequence">
+            <field name="name">Hostel student Sequence</field>
+            <field name="code">hostel.student.sequence</field>
+            <field name="prefix">HS/</field>
+            <field name="padding">4</field>
+            <field name="number_next">1</field>
+            <field name="number_increment">1</field>
+        </record>
+    </data>
+</odoo>

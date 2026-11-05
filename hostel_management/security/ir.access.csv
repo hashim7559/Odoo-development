@@ -1,0 +1,4 @@
+id,name,model_id,group_id/id,operation,domain
+access.hostel.facility,hostel facility,hostel.facility,base.group_user,crud,
+access.hostel.room,hostel room,hostel.room,base.group_user,crud,
+access.hostel.student,hostel student,hostel.student,base.group_user,crud,

@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 {
     "name": "Hostel Management",
     'author': "mirve",
@@ -5,6 +6,7 @@
     'display_name': """Hostel Management by mirve""",
     "application":True,
     'installable': True,
+    'auto_install': False,
     'sequence': -100,
     'depends': [
         'base',
@@ -17,7 +19,8 @@
         'view/hostel_facility_views.xml',
         'view/hostel_student_views.xml',
         'view/hostel_menus.xml',
-        'data/hostel_facility_demo.xml',
-
+    ],
+    "demo": [
+        'data/hostel_facility_demo.xml'
     ]
 }

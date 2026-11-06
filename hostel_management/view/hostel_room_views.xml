@@ -13,11 +13,11 @@
         <field name="arch" type="xml">
             <list>
                 <field name="room_number"/>
-                <field name="hostel_id"/>
-                <field name="currency_id"/>
                 <field name="room_type"/>
                 <field name="bed_count"/>
                 <field name="base_rent"/>
+                <field name="company_id"/>
+                <field name="currency_id"/>
                 <field name="facilities_id"/>
                 <field name="room_status"/>
 
@@ -34,19 +34,20 @@
                 </header>
                 <sheet>
                     <h1><field name="room_number"/></h1>
+                    <field name="demo"/>
+
                     <group>
                         <group>
-                            <field name="hostel_id"/>
-                            <field name="currency_id"/>
                             <field name="room_type"/>
                             <field name="bed_count"/>
+                            <field name="base_rent"/>
                         </group>
                         <group>
-                            <field name="base_rent"/>
                             <field name="facilities_id" widget="many2many_tags"/>
+                            <field name="company_id"/>
+                            <field name="currency_id"/>
                         </group>
                     </group>
-
                 </sheet>
                 <chatter/>
             </form>

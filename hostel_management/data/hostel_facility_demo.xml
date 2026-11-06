@@ -11,7 +11,7 @@
         </record>
         <record id="facility_demo_3" model="hostel.facility">
             <field name="facility_name">WiFi</field>
-            <field name="monthly_charge">50</field>
+            <field name="monthly_charge">150</field>
         </record>
     </data>
 </odoo>

@@ -6,7 +6,7 @@
     'display_name': """Hostel Management by mirve""",
     "application":True,
     'installable': True,
-    'auto_install': False,
+    # 'auto_install': False,
     'sequence': -100,
     'depends': [
         'base',
@@ -21,6 +21,6 @@
         'view/hostel_menus.xml',
     ],
     "demo": [
-        'data/hostel_facility_demo.xml'
+        'demo/hostel_facility_demo.xml'
     ]
 }

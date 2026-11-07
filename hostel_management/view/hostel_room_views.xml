@@ -34,7 +34,7 @@
                 </header>
                 <sheet>
                     <h1><field name="room_number"/></h1>
-                    <field name="demo"/>
+
 
                     <group>
                         <group>

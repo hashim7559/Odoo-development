@@ -26,6 +26,10 @@
         <field name="model">hostel.student</field>
         <field name="arch" type="xml">
             <form>
+                <header>
+                    <button name="allot_room" type="object"
+                            string="Allot room" invisible="joining"/>
+                </header>
                 <sheet>
                     <field name="image_1920"
                                    class="oe_avatar"
@@ -52,6 +56,7 @@
                             <field name="state_id"/>
                             <field name="country_id"/>
                             <field name="company_id"/>
+                            <field name="joining"/>
                             <field name="partner_id" invisible="not id"/>
                         </group>
                     </group>

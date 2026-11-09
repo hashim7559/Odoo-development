@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from odoo import fields,models,api,_
 
+
 class HostelStudent(models.Model):
     '''
         It's a port of hostel management module. that consist of fields such as
@@ -15,6 +16,20 @@ class HostelStudent(models.Model):
         ('pending', 'Pending'),
         ('paid', 'Paid'),
     ]
+    def allot_room(self):
+        for rec in self:
+            val=(rec.env['hostel.room'].
+                 search(['|',('room_status', '=','empty'),
+                         ('room_status', '=','partial')]))
+            for i in val:
+                rec.room_id = i
+                rec.room_id.message_post(body=_("Student as been added"))
+                rec.joining = fields.Date.today()
+                break
+            print(val)
+
+
+
 
     student_id = fields.Char(string="Student ID", required=True, copy=False,
                              readonly=True, default= 'New')
@@ -25,7 +40,10 @@ class HostelStudent(models.Model):
                                  ondelete='cascade', readonly=True )
     dob = fields.Datetime( string="Student DOB")
     age = fields.Integer( string="Student Age")
-    room_id = fields.Many2one("hostel.room", string="Room")
+    joining = fields.Date(String="Student Joining Date", readonly=True)
+
+    room_id = fields.Many2one("hostel.room", string="Room",
+                              readonly=True, copy=False)
     invoice_status = fields.Selection(selection=INVOICE_STATUS,
                                       string="Invoice Status")
 
@@ -70,3 +88,4 @@ class HostelStudent(models.Model):
                 #Why use f string becuse only str to str concatination posible +
             else:
                 record.display_name = record.student_id + '-'
+

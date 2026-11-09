@@ -15,18 +15,18 @@ class HostelRoom(models.Model):
 
 
     room_number = fields.Char(string="Room Number", required=True, copy=False,
-                              readonly=True, default= 'New')
+                              readonly=True, default= 'New', )
 
     room_type = fields.Selection(selection=[
                                         ('single', 'Single'),
                                         ('double', 'Double')],
                                         string="Room Type", required=True,
-                                        default='single')
+                                        default='single', tracking=2)
     bed_count = fields.Integer(string="Number of Bed")
     base_rent = fields.Monetary(string="Base Rent",
                                 currency_field='currency_id')
     facilities_id = fields.Many2many('hostel.facility',
-                                     string="Facilities")
+                                     string="Facilities", tracking=1)
     company_id = fields.Many2one(comodel_name="res.company", required=True,
                                  index=True,
                                  default=lambda self: self.env.company)

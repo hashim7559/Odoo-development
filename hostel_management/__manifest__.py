@@ -6,11 +6,12 @@
     'display_name': """Hostel Management by mirve""",
     "application":True,
     'installable': True,
-    # 'auto_install': False,
+    'auto_install': False,
     'sequence': -100,
     'depends': [
         'base',
         'mail',
+        'contacts',
     ],
     "data": [
         'data/sequence_data.xml',

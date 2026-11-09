@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-# It's a part of hostel management
 from odoo import fields, models,api
 from odoo.exceptions import UserError
 

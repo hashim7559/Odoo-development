@@ -11,6 +11,7 @@
     'depends': [
         'base',
         'mail',
+        'contacts',
     ],
     "data": [
         'data/sequence_data.xml',
@@ -21,6 +22,6 @@
         'view/hostel_menus.xml',
     ],
     "demo": [
-        'data/hostel_facility_demo.xml'
+        'demo/hostel_facility_demo.xml'
     ]
 }

@@ -19,6 +19,7 @@
         'view/hostel_room_views.xml',
         'view/hostel_facility_views.xml',
         'view/hostel_student_views.xml',
+        'view/leave_request_views.xml',
         'view/hostel_menus.xml',
     ],
     "demo": [

@@ -12,11 +12,8 @@ class HostelRoom(models.Model):
     _rec_name = 'room_number'
     _inherit = ['mail.thread', 'mail.activity.mixin']
 
-
-
     room_number = fields.Char(string="Room Number", required=True, copy=False,
                               readonly=True, default= 'New', )
-
     room_type = fields.Selection(selection=[
                                         ('single', 'Single'),
                                         ('double', 'Double')],
@@ -29,7 +26,8 @@ class HostelRoom(models.Model):
                                      string="Facilities", tracking=1)
     total_rent = fields.Monetary(string="Total Rent",
                                  currency_field='currency_id',
-                                 compute='_compute_total_rent')
+                                 compute='_compute_total_rent',
+                                 inverse='_inverse_total_rent')
     company_id = fields.Many2one(comodel_name="res.company", required=True,
                                  index=True,
                                  default=lambda self: self.env.company)
@@ -37,11 +35,10 @@ class HostelRoom(models.Model):
                                   string="Currency",
                                   related="company_id.currency_id")
     student_ids = fields.One2many(comodel_name="hostel.student",
-                                  inverse_name="room_id", tracking=True,)
-    available = fields.Integer(string="students in room",
-                               compute="compute_available")
-
-
+                                  inverse_name="room_id", tracking=True,
+                                  readonly=True,)
+    student_count = fields.Integer(string="students in room",
+                                   compute="_compute_student_count", default=0)
     room_status = fields.Selection(selection=[
                                                 ("empty", "Empty"),
                                                 ("partial", "Partial"),
@@ -52,22 +49,25 @@ class HostelRoom(models.Model):
     @api.depends('base_rent','total_rent','facilities_id')
     def _compute_total_rent(self):
         for record in self:
-            record.total_rent = (record.total_rent + record.base_rent +
-                                 sum(record.facilities_id.mapped(
-                                     'monthly_charge')))
+            record.total_rent = record.base_rent +sum(
+                record.facilities_id.mapped('monthly_charge'))
 
+    def _inverse_total_rent(self):
+        for record in self:
+            record.base_rent = record.total_rent - sum(
+                record.facilities_id.mapped('monthly_charge'))
 
     @api.depends('student_ids')
-    def compute_available(self):
-        self.available = len(self.student_ids)
+    def _compute_student_count(self):
+        self.student_count = len(self.student_ids)
         print(len(self.student_ids))
 
 
-    @api.depends('bed_count','available')
+    @api.depends('bed_count','student_count')
     def _compute_room_status(self):
-        if self.available ==0:
+        if self.student_count ==0:
             self.room_status = "empty"
-        elif self.available < self.bed_count:
+        elif self.student_count < self.bed_count:
             self.room_status = "partial"
         else:
             self.room_status = "full"

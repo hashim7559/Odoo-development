@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 from odoo import fields,models,api,_
 
-
 class HostelStudent(models.Model):
     '''
         It's a port of hostel management module. that consist of fields such as
@@ -11,25 +10,6 @@ class HostelStudent(models.Model):
     _inherits = {'res.partner': 'partner_id'}
     _description = "Hostel Student"
     _inherit = ['mail.thread', 'mail.activity.mixin']
-
-    INVOICE_STATUS = [
-        ('pending', 'Pending'),
-        ('paid', 'Paid'),
-    ]
-    def allot_room(self):
-        for rec in self:
-            val=(rec.env['hostel.room'].
-                 search(['|',('room_status', '=','empty'),
-                         ('room_status', '=','partial')]))
-            for i in val:
-                rec.room_id = i
-                rec.room_id.message_post(body=_("Student as been added"))
-                rec.joining = fields.Date.today()
-                break
-            print(val)
-
-
-
 
     student_id = fields.Char(string="Student ID", required=True, copy=False,
                              readonly=True, default= 'New')
@@ -44,8 +24,30 @@ class HostelStudent(models.Model):
 
     room_id = fields.Many2one("hostel.room", string="Room",
                               readonly=True, copy=False)
-    invoice_status = fields.Selection(selection=INVOICE_STATUS,
-                                      string="Invoice Status")
+    invoice_status = fields.Selection([('pending', 'Pending'),
+                                                ('paid', 'Paid'),],
+                                        string="Invoice Status")
+
+    def allot_room(self):
+        '''
+            It's a button function once the button was clicked the bellow
+            action was triggered first receive value from hostel room with
+            using search then take the first value of that value's then store
+            that first value into room_id in student model, load the
+            joining date as today's date and  also load message into the
+            hostel.room model chatter.
+        '''
+        for record in self:
+            val=(record.env['hostel.room'].
+                 search(['|',('room_status', '=','empty'),
+                         ('room_status', '=','partial')]))
+            for i in val:
+                record.room_id = i
+                record.room_id.message_post(body=_(f"{record.partner_id.name} "
+                                                f"as been added"))
+                record.joining = fields.Date.today()
+                break
+            print(val)
 
     @api.onchange('dob')
     def compute_student_age(self):
@@ -80,7 +82,6 @@ class HostelStudent(models.Model):
                                       next_by_code('hostel.student.sequence'))
         return super(HostelStudent, self).create(vals_list)
 
-    @api.depends('student_id','partner_id')
     def _compute_display_name(self):
         for record in self:
             if record.partner_id :
@@ -88,4 +89,3 @@ class HostelStudent(models.Model):
                 #Why use f string becuse only str to str concatination posible +
             else:
                 record.display_name = record.student_id + '-'
-

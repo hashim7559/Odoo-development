@@ -11,23 +11,22 @@ class HostelStudent(models.Model):
     _description = "Hostel Student"
     _inherit = ['mail.thread', 'mail.activity.mixin']
 
-    INVOICE_STATUS = [
-        ('pending', 'Pending'),
-        ('paid', 'Paid'),
-    ]
-
     student_id = fields.Char(string="Student ID", required=True, copy=False,
                              readonly=True, default= 'New')
     company_id = fields.Many2one(comodel_name="res.company", required=True,
-                                 index=True,
                                  default=lambda self: self.env.company)
     partner_id = fields.Many2one("res.partner", required=True,
                                  ondelete='cascade', readonly=True )
     dob = fields.Datetime( string="Student DOB")
     age = fields.Integer( string="Student Age")
-    room_id = fields.Many2one("hostel.room", string="Room")
-    invoice_status = fields.Selection(selection=INVOICE_STATUS,
-                                      string="Invoice Status")
+    joining = fields.Date(String="Student Joining Date", readonly=True)
+
+    room_id = fields.Many2one("hostel.room", string="Room",
+                              readonly=True, copy=False)
+    invoice_status = fields.Selection([('pending', 'Pending'),
+                                                ('paid', 'Paid'),],
+                                        string="Invoice Status")
+
 
     @api.onchange('dob')
     def compute_student_age(self):
@@ -50,7 +49,6 @@ class HostelStudent(models.Model):
                 record.age = age
             print(fields.Date.today().month)
 
-
     @api.model_create_multi
     def create(self, vals_list):
         '''
@@ -62,11 +60,25 @@ class HostelStudent(models.Model):
                                       next_by_code('hostel.student.sequence'))
         return super(HostelStudent, self).create(vals_list)
 
-    @api.depends('student_id','partner_id')
+
     def _compute_display_name(self):
         for record in self:
             if record.partner_id :
-                record.display_name = f"{record.student_id} - {record.partner_id.name}"
+                record.display_name = \
+                    f"{record.student_id} - {record.partner_id.name}"
                 #Why use f string becuse only str to str concatination posible +
             else:
                 record.display_name = record.student_id + '-'
+
+    def action_open_room_wizard(self):
+        '''this fuction is used for the wizard calling purpose, it
+        describes the view_mode also in there and describes context through
+        value passing.'''
+        return {
+                'type': 'ir.actions.act_window',
+                'name': 'list rooms available',
+                'res_model': 'wizard.available.room',
+                'view_mode': 'form',
+                'target': 'new',
+                'context': {'default_student_id': self.id},
+        }

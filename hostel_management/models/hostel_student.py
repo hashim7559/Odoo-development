@@ -14,7 +14,6 @@ class HostelStudent(models.Model):
     student_id = fields.Char(string="Student ID", required=True, copy=False,
                              readonly=True, default= 'New')
     company_id = fields.Many2one(comodel_name="res.company", required=True,
-                                 index=True,
                                  default=lambda self: self.env.company)
     partner_id = fields.Many2one("res.partner", required=True,
                                  ondelete='cascade', readonly=True )
@@ -28,26 +27,6 @@ class HostelStudent(models.Model):
                                                 ('paid', 'Paid'),],
                                         string="Invoice Status")
 
-    def allot_room(self):
-        '''
-            It's a button function once the button was clicked the bellow
-            action was triggered first receive value from hostel room with
-            using search then take the first value of that value's then store
-            that first value into room_id in student model, load the
-            joining date as today's date and  also load message into the
-            hostel.room model chatter.
-        '''
-        for record in self:
-            val=(record.env['hostel.room'].
-                 search(['|',('room_status', '=','empty'),
-                         ('room_status', '=','partial')]))
-            for i in val:
-                record.room_id = i
-                record.room_id.message_post(body=_(f"{record.partner_id.name} "
-                                                f"as been added"))
-                record.joining = fields.Date.today()
-                break
-            print(val)
 
     @api.onchange('dob')
     def compute_student_age(self):
@@ -70,7 +49,6 @@ class HostelStudent(models.Model):
                 record.age = age
             print(fields.Date.today().month)
 
-
     @api.model_create_multi
     def create(self, vals_list):
         '''
@@ -82,10 +60,25 @@ class HostelStudent(models.Model):
                                       next_by_code('hostel.student.sequence'))
         return super(HostelStudent, self).create(vals_list)
 
+
     def _compute_display_name(self):
         for record in self:
             if record.partner_id :
-                record.display_name = f"{record.student_id} - {record.partner_id.name}"
+                record.display_name = \
+                    f"{record.student_id} - {record.partner_id.name}"
                 #Why use f string becuse only str to str concatination posible +
             else:
                 record.display_name = record.student_id + '-'
+
+    def action_open_room_wizard(self):
+        '''this fuction is used for the wizard calling purpose, it
+        describes the view_mode also in there and describes context through
+        value passing.'''
+        return {
+                'type': 'ir.actions.act_window',
+                'name': 'list rooms available',
+                'res_model': 'wizard.available.room',
+                'view_mode': 'form',
+                'target': 'new',
+                'context': {'default_student_id': self.id},
+        }

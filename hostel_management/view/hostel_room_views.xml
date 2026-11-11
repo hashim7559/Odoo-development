@@ -1,4 +1,4 @@
-<?xml version="1.0"  ?>
+<?xml version="1.0" encoding="utf-8"?>
 <odoo>
     <record id="hostel_room_action" model="ir.actions.act_window">
         <field name="name">Room</field>
@@ -45,8 +45,11 @@
                             <field name="total_rent"/>
                         </group>
                         <group>
-                            <field name="facilities_id" widget="many2many_tags"/>
-                            <field name="company_id"/>
+                            <field name="facilities_id"
+                                   widget="many2many_tags"
+                                   options="{'no_create': True}"/>
+                            <field name="company_id"
+                                   options="{'no_create': True}"/>
                             <field name="currency_id"/>
                         </group>
                     </group>

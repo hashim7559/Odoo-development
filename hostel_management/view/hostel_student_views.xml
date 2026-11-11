@@ -1,4 +1,4 @@
-<?xml version="1.0"  ?>
+<?xml version="1.0" encoding="utf-8"?>
 <odoo>
     <record id="hostel_student_action" model="ir.actions.act_window">
         <field name="name">Student</field>
@@ -27,8 +27,11 @@
         <field name="arch" type="xml">
             <form>
                 <header>
-                    <button name="allot_room" type="object"
-                            string="Allot room" invisible="joining"/>
+                    <button name="action_open_room_wizard"
+                       string="Allot room"
+                       type="object"
+                       invisible="room_id"
+                       class="btn-primary"/>
                 </header>
                 <sheet>
                     <field name="image_1920"
@@ -53,9 +56,12 @@
                         <group>
                             <field name="street"/>
                             <field name="city"/>
-                            <field name="state_id"/>
-                            <field name="country_id"/>
-                            <field name="company_id"/>
+                            <field name="state_id"
+                                   options="{'no_create': True}"/>
+                            <field name="country_id"
+                                   options="{'no_create': True}"/>
+                            <field name="company_id"
+                                   options="{'no_create': True}"/>
                             <field name="joining"/>
                             <field name="partner_id" invisible="not id"/>
                         </group>

@@ -1,4 +1,4 @@
-<?xml version="1.0"?>
+<?xml version="1.0" encoding="utf-8"?>
 <odoo>
     <record id="leave_request_view_action" model="ir.actions.act_window">
         <field name="name">Leave Request</field>
@@ -31,18 +31,24 @@
                             invisible="status == 'approved'"/>
                     <button name="reject" type="object" string="Reject"
                             invisible="status == 'rejected'"/>
-                    <field name="status" widget="statusbar" options="{'clickable': '1'}"/>
+                    <field name="status" widget="statusbar"
+                           options="{'clickable': '1'}"/>
                 </header>
                 <sheet>
                     <group>
                         <group>
-                            <field name="student_id" readonly="status != 'new'"/>
-                            <field name="leave_type" readonly="status != 'new'"/>
+                            <field name="student_id"
+                                   readonly="status != 'new'"
+                                   options="{'no_create': True}"/>
+                            <field name="leave_type"
+                                   readonly="status != 'new'"/>
                         </group>
                         <group>
                             <field name="from_date"
                                    widget="daterange"
-                                   options="{'end_date_field': 'to_date', 'always_range': True}"
+                                   options="{'end_date_field': 'to_date',
+                                             'always_range': True,
+                                             'min_date': 'today'}"
                                    readonly="status != 'new'"/>
                             <field name="to_date"
                                    readonly="status != 'new'"

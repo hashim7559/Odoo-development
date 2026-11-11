@@ -1,4 +1,4 @@
-<?xml version="1.0"  ?>
+<?xml version="1.0" encoding="utf-8"?>
 <odoo>
     <record id="hostel_facility_action" model="ir.actions.act_window">
         <field name="name">Hostel Facility</field>
@@ -12,7 +12,7 @@
             <list editable="bottom">
                 <field name="facility_name"/>
                 <field name="monthly_charge"/>
-                <field name="company_id"/>
+                <field name="company_id" options="{'no_create': True}"/>
                 <field name="currency_id"/>
             </list>
         </field>

@@ -29,7 +29,6 @@ class HostelRoom(models.Model):
                                  compute='_compute_total_rent',
                                  inverse='_inverse_total_rent')
     company_id = fields.Many2one(comodel_name="res.company", required=True,
-                                 index=True,
                                  default=lambda self: self.env.company)
     currency_id = fields.Many2one(comodel_name="res.currency",
                                   string="Currency",

@@ -5,6 +5,11 @@
         <field name="res_model">hostel.student</field>
         <field name="view_mode">list,form</field>
     </record>
+    <record id="student_invoice_action" model="ir.actions.act_window">
+        <field name="name">Student invoices</field>
+        <field name="res_model">account.move</field>
+        <field name="view_mode">list,form</field>
+    </record>
     <record id="hostel_student_view_list" model="ir.ui.view">
         <field name="name">hostel.student.view.list</field>
         <field name="model">hostel.student</field>
@@ -34,6 +39,12 @@
                        class="btn-primary"/>
                 </header>
                 <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button name="%(student_invoice_action)d"
+                                type="action" icon="edit_square" string="invoices"
+                                domain="[('partner_id','=',active_id)]">
+                        </button>
+                    </div>
                     <field name="image_1920"
                                    class="oe_avatar"
                                    widget="contact_image"

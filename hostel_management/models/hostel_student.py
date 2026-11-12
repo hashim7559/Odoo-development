@@ -70,6 +70,9 @@ class HostelStudent(models.Model):
             else:
                 record.display_name = record.student_id + '-'
 
+    # def invoices(self):
+    #     print("invoices")
+
     def action_open_room_wizard(self):
         '''this fuction is used for the wizard calling purpose, it
         describes the view_mode also in there and describes context through

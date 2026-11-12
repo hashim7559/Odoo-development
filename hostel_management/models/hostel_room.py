@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from odoo import fields, models,api, _
+from odoo import fields, models,api, _, Command
 
 class HostelRoom(models.Model):
     '''
@@ -44,6 +44,8 @@ class HostelRoom(models.Model):
                                                 ("full", "Full")],
                                    string="Room Status", default="empty",
                                    compute="_compute_room_status", store=True)
+    product_id = fields.Many2one(comodel_name="product.product",
+                                 default = lambda self: self.env['product.product'].search([('id', '=',204)], limit=1))
 
     @api.depends('base_rent','total_rent','facilities_id')
     def _compute_total_rent(self):
@@ -81,3 +83,21 @@ class HostelRoom(models.Model):
                 vals['room_number'] = (self.env['ir.sequence'].
                                        next_by_code('hostel.room.sequence'))
         return super(HostelRoom, self).create(vals_list)
+
+    def monthly_invoice(self):
+        print("hello world")
+        for record in self:
+            l=len(record.student_ids)
+            print(l)
+            print(record.student_ids[l-1].partner_id.id)
+            for i in range(0,l):
+                self.env['account.move'].create({
+                    'move_type': 'out_invoice',
+                    'partner_id': record.student_ids[i].partner_id.id,
+                    'company_id': self.company_id.id,
+                    'invoice_line_ids': [Command.create({
+                        'product_id':self.product_id.id,
+                        'price_unit':self.total_rent,})]
+                })
+
+

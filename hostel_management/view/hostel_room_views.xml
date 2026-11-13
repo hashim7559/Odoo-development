@@ -34,10 +34,15 @@
             <form>
                 <header>
                     <button name="monthly_invoice" type="object"
-                            string="Monthly invoice"/>
+                            string="Monthly invoice"
+                            invisible="not student_ids"/>
                     <field name="room_status" widget="statusbar" options="{'clickable': '1'}"/>
                 </header>
                 <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button name="room_invoices" type="object"
+                                string="invoices"/>
+                    </div>
                     <h1><field name="room_number"/></h1>
                     <group>
                         <group>

@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<odoo>
+    <record id="res_partner_1_view_action" model="ir.actions.act_window">
+        <field name="name">Contact</field>
+        <field name="res_model">res.partner</field>
+        <field name="view_mode">list,form</field>
+        <field name="domain">[('partner_id','child_of','')]</field>
+    </record>
+    <record id="account_move_1_view_action" model="ir.actions.act_window">
+        <field name="name">Invoices</field>
+        <field name="res_model">account.move</field>
+        <field name="domain">[('','=','hostel')]</field>
+        <field name="view_mode">list,form</field>
+    </record>
+</odoo>

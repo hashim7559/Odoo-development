@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 from odoo import fields,models,api,_
+from odoo.exceptions import UserError
+
 
 class HostelStudent(models.Model):
     '''
@@ -26,6 +28,9 @@ class HostelStudent(models.Model):
     invoice_status = fields.Selection([('pending', 'Pending'),
                                                 ('paid', 'Paid'),],
                                         string="Invoice Status")
+    invoice_count=fields.Integer(string="Invoice Count", compute='_compute_invoice_count')
+    leave_request_ids = fields.One2many('leave.request','student_id')
+
 
 
     @api.onchange('dob')
@@ -48,6 +53,11 @@ class HostelStudent(models.Model):
             else:
                 record.age = age
             print(fields.Date.today().month)
+
+    @api.depends()
+    def _compute_invoice_count(self):
+        count= self.env['account.move'].search([('partner_id','=',self.partner_id.id)])
+        self.invoice_count = len(count)
 
     @api.model_create_multi
     def create(self, vals_list):
@@ -85,3 +95,29 @@ class HostelStudent(models.Model):
                 'target': 'new',
                 'context': {'default_student_id': self.id},
         }
+
+    def vacate(self):
+        print("hii")
+        self.room_id = False
+        self.joining = False
+
+    @api.ondelete(at_uninstall=True)
+    def _delete_student(self):
+        print("you cant delete student")
+        if self.room_id:
+            raise UserError(f'The student {self.name} cant be delete. '
+                            f'{self.name} is already assigned to the '
+                             f'{self.room_id.display_name} room.')
+
+    def student_invoice(self):
+        action = self.env["ir.actions.actions"]._for_xml_id("account.action_move_out_invoice_type")
+        action['domain'] = [('partner_id','=',self.partner_id.id)]
+        print(action)
+        return action
+
+
+
+# class ResPartner(models.Model):
+#     _inherit = 'res.partner'
+#
+#     student_rank = fields.Integer(string="Student Rank", default=0)

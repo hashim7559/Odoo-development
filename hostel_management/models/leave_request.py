@@ -11,7 +11,7 @@ class LeaveRequest(models.Model):
     _inherit = ['mail.thread','mail.activity.mixin']
 
     student_id=fields.Many2one('hostel.student','Student',
-                               required=True)
+                               required=True, ondelete='cascade')
 
     from_date = fields.Date('From Date', default=fields.Date.today())
     to_date = fields.Date("To Date",

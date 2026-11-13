@@ -23,7 +23,8 @@ class HostelRoom(models.Model):
     base_rent = fields.Monetary(string="Base Rent",
                                 currency_field='currency_id')
     facilities_id = fields.Many2many('hostel.facility',
-                                     string="Facilities", tracking=1)
+                                     string="Facilities", tracking=1,
+                                     ondelete='restrict')
     total_rent = fields.Monetary(string="Total Rent",
                                  currency_field='currency_id',
                                  compute='_compute_total_rent',
@@ -92,12 +93,19 @@ class HostelRoom(models.Model):
             print(record.student_ids[l-1].partner_id.id)
             for i in range(0,l):
                 self.env['account.move'].create({
+
                     'move_type': 'out_invoice',
                     'partner_id': record.student_ids[i].partner_id.id,
                     'company_id': self.company_id.id,
-                    'invoice_line_ids': [Command.create({
-                        'product_id':self.product_id.id,
-                        'price_unit':self.total_rent,})]
+                    'invoice_origin': 'hostel',
+                    'invoice_line_ids': [
+                        Command.create({'product_id':self.product_id.id,
+                                        'price_unit':self.total_rent,}),
+                        ]
                 })
 
+    def room_invoices(self):
+        action = self.env["ir.actions.actions"]._for_xml_id("account.action_move_out_invoice_type")
+        action['domain'] = [('partner_id','child_of',self.student_ids.partner_id.id)]
 
+        return action

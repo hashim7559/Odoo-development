@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 from calendar import monthrange
-
 from odoo import fields, models,api, _, Command
 
 from odoo.exceptions import UserError
@@ -52,7 +51,6 @@ class HostelRoom(models.Model):
     product_id = fields.Many2one(comodel_name="product.product",
                                  default = lambda self: self.env['product.product'].search([('id', '=',204)], limit=1))
     invoice_date = fields.Date('invoice date',default=fields.Date.today())
-    # monthend=fields.Date(default=fields.Date.today())
 
     @api.depends('base_rent','total_rent','facilities_id')
     def _compute_total_rent(self):
@@ -93,19 +91,25 @@ class HostelRoom(models.Model):
 
 
     def monthly_invoice(self):
+
         for record in self:
+            flags = 0
+            for student in record.student_ids:
+                if student.student_ids.partner_id.invoice_ids:
+                    flags +=1
             for student in record.student_ids:
                 monthend = fields.Date.today()
                 monthend =monthend.replace(
-                                    day=monthrange(
-                                        year=monthend.year,
-                                        month=monthend.month)[1])
+                    day=monthrange(
+                        year=monthend.year,
+                        month=monthend.month)[1])
                 print(monthend)
                 if student.student_ids.partner_id.invoice_ids:
-                    if student.student_ids.partner_id.invoice_ids.invoice_date < monthend:
-                        raise UserError(f"The invoice already posted for "
-                                        f"{student.student_ids.name}.")
-                    print(student.student_ids.partner_id.invoice_ids)
+                    if flags == len(record.student_ids):
+                        if student.student_ids.partner_id.invoice_ids.invoice_date < monthend:
+                            raise UserError(f"The invoice already posted for "
+                                            f"{student.student_ids.name}.")
+                        print(student.student_ids.partner_id.invoice_ids)
                 else:
                     days=monthrange(year=student.student_ids.joining.year,
                                     month=student.student_ids.joining.month)
@@ -122,10 +126,14 @@ class HostelRoom(models.Model):
                                             'quantity':days[1]-student.student_ids.joining.day,}),
                         ]
                     })
+                student.student_ids.flag = True
 
     def room_invoices(self):
+        '''
+            It's a action button. this fuctiotion that helps to redirect to
+            the account move based on the sertain critiria. they have one
+            domain for listing only the related fealds.
+        '''
         action = self.env["ir.actions.actions"]._for_xml_id("account.action_move_out_invoice_type")
-        db = self.student_ids.mapped('partner_id.id')
-        print(type(db))
         action['domain'] = [('room_id','=', self.id)]
         return action

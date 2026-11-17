@@ -69,7 +69,6 @@
                             <field name="dob"/>
                             <field name="age"/>
                             <field name="room_id"/>
-<!--                            <field name="student_rank"/>-->
 
                         </group>
                         <group>
@@ -82,7 +81,6 @@
                             <field name="company_id"
                                    options="{'no_create': True}"/>
                             <field name="joining"/>
-<!--                            <field name="leave_request_ids"/>-->
                             <field name="partner_id" invisible="not id"/>
                         </group>
                     </group>

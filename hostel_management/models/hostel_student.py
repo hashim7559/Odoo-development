@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-from email.policy import default
 
 from odoo import fields,models,api,_
 from odoo.exceptions import UserError
@@ -63,7 +62,6 @@ class HostelStudent(models.Model):
             count = self.env['account.move'].search_count([('partner_id','=',
                                                       record.partner_id.id)])
             record.invoice_count = count
-            print (f"count of -{count}")
 
     @api.model_create_multi
     def create(self, vals_list):
@@ -86,8 +84,6 @@ class HostelStudent(models.Model):
             else:
                 record.display_name = record.student_id + '-'
 
-    # def invoices(self):
-    #     print("invoices")
 
     def action_open_room_wizard(self):
         '''this fuction is used for the wizard calling purpose, it
@@ -103,7 +99,7 @@ class HostelStudent(models.Model):
         }
 
     def vacate(self):
-        print("hii")
+        '''this function is used for vacate the student from room.'''
         self.room_id = False
         self.joining = False
 
@@ -116,6 +112,10 @@ class HostelStudent(models.Model):
                              f'{self.room_id.display_name} room.')
 
     def student_invoice(self):
+        '''
+        this function is used for redirecting into another action and through
+        that pass a domain also.
+        '''
         action = self.env["ir.actions.actions"]._for_xml_id("account.action_move_out_invoice_type")
         action['domain'] = [('partner_id','=',self.partner_id.id)]
         print(action)
@@ -124,6 +124,7 @@ class HostelStudent(models.Model):
 
 
 class ResPartner(models.Model):
+    '''this class represent res partner in the hotel management'''
     _inherit = 'res.partner'
 
     student_ids = fields.One2many('hostel.student', 'partner_id')

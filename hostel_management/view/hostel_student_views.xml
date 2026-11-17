@@ -16,7 +16,7 @@
                 <field name="name"/>
                 <field name="email"/>
                 <field name="phone"/>
-<!--                <field name="invoice_count"/>-->
+                <field name="invoice_count"/>
                 <field name="dob"/>
                 <field name="age"/>
                 <field name="company_id"/>

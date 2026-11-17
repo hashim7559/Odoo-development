@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+from email.policy import default
+
 from odoo import fields,models,api,_
 from odoo.exceptions import UserError
 
@@ -25,8 +27,9 @@ class HostelStudent(models.Model):
 
     room_id = fields.Many2one("hostel.room", string="Room",
                               readonly=True, copy=False)
-    invoice_status = fields.Selection([('pending', 'Pending'),
-                                                ('paid', 'Paid'),],
+    invoice_status = fields.Selection([('no', 'Nothing to invoice'),
+                                                ('pending', 'Pending'),
+                                                ('paid', 'Paid'),],default='no',
                                         string="Invoice Status")
     invoice_count=fields.Integer(string="Invoice Count", compute='_compute_invoice_count')
     leave_request_ids = fields.One2many('leave.request','student_id')
@@ -56,8 +59,11 @@ class HostelStudent(models.Model):
 
     @api.depends()
     def _compute_invoice_count(self):
-        count= self.env['account.move'].search([('partner_id','=',self.partner_id.id)])
-        self.invoice_count = len(count)
+        for record in self:
+            count = self.env['account.move'].search_count([('partner_id','=',
+                                                      record.partner_id.id)])
+            record.invoice_count = count
+            print (f"count of -{count}")
 
     @api.model_create_multi
     def create(self, vals_list):
@@ -117,7 +123,7 @@ class HostelStudent(models.Model):
 
 
 
-# class ResPartner(models.Model):
-#     _inherit = 'res.partner'
-#
-#     student_rank = fields.Integer(string="Student Rank", default=0)
+class ResPartner(models.Model):
+    _inherit = 'res.partner'
+
+    student_ids = fields.One2many('hostel.student', 'partner_id')

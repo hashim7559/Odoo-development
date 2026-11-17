@@ -1,5 +1,9 @@
 # -*- coding: utf-8 -*-
+from calendar import monthrange
+
 from odoo import fields, models,api, _, Command
+
+from odoo.exceptions import UserError
 
 class HostelRoom(models.Model):
     '''
@@ -47,6 +51,8 @@ class HostelRoom(models.Model):
                                    compute="_compute_room_status", store=True)
     product_id = fields.Many2one(comodel_name="product.product",
                                  default = lambda self: self.env['product.product'].search([('id', '=',204)], limit=1))
+    invoice_date = fields.Date('invoice date',default=fields.Date.today())
+    # monthend=fields.Date(default=fields.Date.today())
 
     @api.depends('base_rent','total_rent','facilities_id')
     def _compute_total_rent(self):
@@ -85,27 +91,41 @@ class HostelRoom(models.Model):
                                        next_by_code('hostel.room.sequence'))
         return super(HostelRoom, self).create(vals_list)
 
-    def monthly_invoice(self):
-        print("hello world")
-        for record in self:
-            l=len(record.student_ids)
-            print(l)
-            print(record.student_ids[l-1].partner_id.id)
-            for i in range(0,l):
-                self.env['account.move'].create({
 
-                    'move_type': 'out_invoice',
-                    'partner_id': record.student_ids[i].partner_id.id,
-                    'company_id': self.company_id.id,
-                    'invoice_origin': 'hostel',
-                    'invoice_line_ids': [
-                        Command.create({'product_id':self.product_id.id,
-                                        'price_unit':self.total_rent,}),
+    def monthly_invoice(self):
+        for record in self:
+            for student in record.student_ids:
+                monthend = fields.Date.today()
+                monthend =monthend.replace(
+                                    day=monthrange(
+                                        year=monthend.year,
+                                        month=monthend.month)[1])
+                print(monthend)
+                if student.student_ids.partner_id.invoice_ids:
+                    if student.student_ids.partner_id.invoice_ids.invoice_date < monthend:
+                        raise UserError(f"The invoice already posted for "
+                                        f"{student.student_ids.name}.")
+                    print(student.student_ids.partner_id.invoice_ids)
+                else:
+                    days=monthrange(year=student.student_ids.joining.year,
+                                    month=student.student_ids.joining.month)
+                    print(days[1])
+                    self.env['account.move'].create({
+                        'move_type': 'out_invoice',
+                        'partner_id': student.student_ids.partner_id.id,
+                        'company_id': self.company_id.id,
+                        'room_id': self.id,
+                        'invoice_date': self.invoice_date,
+                        'invoice_line_ids': [
+                            Command.create({'product_id':self.product_id.id,
+                                            'price_unit':self.total_rent/days[1],
+                                            'quantity':days[1]-student.student_ids.joining.day,}),
                         ]
-                })
+                    })
 
     def room_invoices(self):
         action = self.env["ir.actions.actions"]._for_xml_id("account.action_move_out_invoice_type")
-        action['domain'] = [('partner_id','child_of',self.student_ids.partner_id.id)]
-
+        db = self.student_ids.mapped('partner_id.id')
+        print(type(db))
+        action['domain'] = [('room_id','=', self.id)]
         return action

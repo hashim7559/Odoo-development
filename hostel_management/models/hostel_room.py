@@ -50,7 +50,6 @@ class HostelRoom(models.Model):
                                    compute="_compute_room_status", store=True)
     product_id = fields.Many2one(comodel_name="product.product",
                                  default = lambda self: self.env['product.product'].search([('id', '=',204)], limit=1))
-    invoice_date = fields.Date('invoice date',default=fields.Date.today())
 
     @api.depends('base_rent','total_rent','facilities_id')
     def _compute_total_rent(self):
@@ -89,9 +88,33 @@ class HostelRoom(models.Model):
                                        next_by_code('hostel.room.sequence'))
         return super(HostelRoom, self).create(vals_list)
 
+    def cron_monthly_invoice(self):
+        rooms = self.env['hostel.room'].search([('room_type', '!=', False)])
+        for record in rooms:
+            for students in record.student_ids:
+                if not students.partner_id.invoice_ids:
+                    days = monthrange(year=students.student_ids.joining.year,
+                                      month=students.student_ids.joining.month)
+                    self.env['account.move'].create({
+                        'move_type': 'out_invoice',
+                        'partner_id': students.partner_id.id,
+                        'company_id': record.company_id.id,
+                        'room_id': record.id,
+                        'invoice_date': fields.Date.today(),
+                        'invoice_line_ids': [
+                            Command.create({
+                                'product_id': record.product_id.id,
+                                'price_unit': record.total_rent/days[1],
+                                'quantity': days[1]-students.student_ids.joining.day,
+                            })
+                        ]
+                    })
+                    print(students.name)
+                print(students)
+            print(record)
+
 
     def monthly_invoice(self):
-
         for record in self:
             flags = 0
             for student in record.student_ids:
@@ -105,34 +128,34 @@ class HostelRoom(models.Model):
                         month=monthend.month)[1])
                 print(monthend)
                 if student.student_ids.partner_id.invoice_ids:
-                    if flags == len(record.student_ids):
-                        if student.student_ids.partner_id.invoice_ids.invoice_date < monthend:
+                    if student.student_ids.partner_id.invoice_ids.invoice_date < monthend:
+                        if flags == len(record.student_ids):
                             raise UserError(f"The invoice already posted for "
                                             f"{student.student_ids.name}.")
                         print(student.student_ids.partner_id.invoice_ids)
-                else:
-                    days=monthrange(year=student.student_ids.joining.year,
-                                    month=student.student_ids.joining.month)
-                    print(days[1])
-                    self.env['account.move'].create({
-                        'move_type': 'out_invoice',
-                        'partner_id': student.student_ids.partner_id.id,
-                        'company_id': self.company_id.id,
-                        'room_id': self.id,
-                        'invoice_date': self.invoice_date,
-                        'invoice_line_ids': [
-                            Command.create({'product_id':self.product_id.id,
-                                            'price_unit':self.total_rent/days[1],
-                                            'quantity':days[1]-student.student_ids.joining.day,}),
-                        ]
-                    })
-                student.student_ids.flag = True
+
+                days=monthrange(year=student.student_ids.joining.year,
+                                month=student.student_ids.joining.month)
+                print(days[1])
+                self.env['account.move'].create({
+                    'move_type': 'out_invoice',
+                    'partner_id': student.student_ids.partner_id.id,
+                    'company_id': self.company_id.id,
+                    'room_id': self.id,
+                    'invoice_date': fields.Date.today(),
+                    'invoice_line_ids': [
+                        Command.create({'product_id':self.product_id.id,
+                                        'price_unit':self.total_rent/days[1],
+                                        'quantity':days[1]-student.student_ids.joining.day,}),
+                    ]
+                })
+            print(student.student_ids.name)
 
     def room_invoices(self):
         '''
-            It's a action button. this fuctiotion that helps to redirect to
-            the account move based on the sertain critiria. they have one
-            domain for listing only the related fealds.
+            It's an action button. this function that helps to redirect to
+            the account move based on the sertain craitiria. they have one
+            domain for listing only the related fields.
         '''
         action = self.env["ir.actions.actions"]._for_xml_id("account.action_move_out_invoice_type")
         action['domain'] = [('room_id','=', self.id)]

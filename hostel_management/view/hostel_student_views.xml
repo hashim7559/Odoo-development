@@ -40,6 +40,8 @@
                             type="object"
                             invisible="not room_id"
                             class="btn-primary"/>
+                    <field name="invoice_status" widget="statusbar" options="{'clickable': '1'}"/>
+
 
                 </header>
                 <sheet>
@@ -69,6 +71,7 @@
                             <field name="dob"/>
                             <field name="age"/>
                             <field name="room_id"/>
+                            <field name="amount"/>
 
                         </group>
                         <group>
@@ -78,6 +81,7 @@
                                    options="{'no_create': True}"/>
                             <field name="country_id"
                                    options="{'no_create': True}"/>
+                            <field name="currency_id"/>
                             <field name="company_id"
                                    options="{'no_create': True}"/>
                             <field name="joining"/>

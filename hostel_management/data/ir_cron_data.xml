@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<odoo>
+    <data>
+        <record id="cron_create_monthly_invoice" model="ir.cron">
+            <field name="name">Create monthly invoice</field>
+            <field name="model_id" ref="model_hostel_room"/>
+            <field name="state">code</field>
+            <field name="code">model.cron_monthly_invoice()</field>
+            <field name="interval_number">1</field>
+            <field name="interval_type">months</field>
+            <field name="active">True</field>
+            <field name="nextcall"
+                   eval="(DateTime.now()-timedelta(days=(DateTime.now().day-1))) + relativedelta(months=1)"/>
+            <field name="priority">1</field>
+        </record>
+    </data>
+</odoo>

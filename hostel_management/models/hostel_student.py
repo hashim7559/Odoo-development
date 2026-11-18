@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from odoo import fields,models,api,_
+from odoo import fields, models, api, _
 from odoo.exceptions import UserError
 
 
@@ -9,31 +9,38 @@ class HostelStudent(models.Model):
         It's a port of hostel management module. that consist of fields such as
         student_id, company_id, partner_id, age, room_id and invoice_status.
     '''
-    _name="hostel.student"
+    _name = "hostel.student"
     _inherits = {'res.partner': 'partner_id'}
     _description = "Hostel Student"
     _inherit = ['mail.thread', 'mail.activity.mixin']
 
     student_id = fields.Char(string="Student ID", required=True, copy=False,
-                             readonly=True, default= 'New')
+                             readonly=True, default='New')
     company_id = fields.Many2one(comodel_name="res.company", required=True,
                                  default=lambda self: self.env.company)
     partner_id = fields.Many2one("res.partner", required=True,
-                                 ondelete='cascade', readonly=True )
-    dob = fields.Datetime( string="Student DOB")
-    age = fields.Integer( string="Student Age")
+                                 ondelete='cascade', readonly=True)
+    dob = fields.Datetime(string="Student DOB")
+    age = fields.Integer(string="Student Age")
     joining = fields.Date(String="Student Joining Date", readonly=True)
 
     room_id = fields.Many2one("hostel.room", string="Room",
                               readonly=True, copy=False)
-    invoice_status = fields.Selection([('no', 'Nothing to invoice'),
-                                                ('pending', 'Pending'),
-                                                ('paid', 'Paid'),],default='no',
-                                        string="Invoice Status")
-    invoice_count=fields.Integer(string="Invoice Count", compute='_compute_invoice_count')
-    leave_request_ids = fields.One2many('leave.request','student_id')
-
-
+    invoice_status = fields.Selection([('pending', 'Pending'),
+                                       ('paid', 'Paid'),],
+                                      string="Invoice Status",
+                                      compute='_compute_invoice_status')
+    payment_status = fields.Selection([('not_paid', 'Not paid'),
+                                       ('paid', 'Paid'),])
+    invoice_count = fields.Integer(string="Invoice Count",
+                                   compute='_compute_invoice_count')
+    currency_id = fields.Many2one(comodel_name="res.currency",
+                                  string="Currency",
+                                  related='company_id.currency_id')
+    amount = fields.Monetary('Monthly amount', 'currency_id',
+                             compute='_compute_monthly_amount')
+    leave_request_ids = fields.One2many('leave.request',
+                                        'student_id')
 
     @api.onchange('dob')
     def compute_student_age(self):
@@ -43,11 +50,11 @@ class HostelStudent(models.Model):
         '''
         for record in self:
             if not record.dob:
-                year= fields.Date.today().year
-                month= fields.Date.today().month
+                year = fields.Date.today().year
+                month = fields.Date.today().month
             else:
-                year= record.dob.year
-                month=record.dob.month
+                year = record.dob.year
+                month = record.dob.month
 
             age = fields.Date.today().year - year
             if month < fields.Date.today().month:
@@ -59,9 +66,27 @@ class HostelStudent(models.Model):
     @api.depends()
     def _compute_invoice_count(self):
         for record in self:
-            count = self.env['account.move'].search_count([('partner_id','=',
-                                                      record.partner_id.id)])
+            count = self.env['account.move'].search_count(
+                [('partner_id', '=',record.partner_id.id)])
             record.invoice_count = count
+
+    @api.depends('invoice_count')
+    def _compute_monthly_amount(self):
+        '''
+        this compute method is used for calcualte remining rent the student
+        need to pay wit using search amount_residual. why uses [0]-its helps
+        to if multiple invoices takes fist invoice amount.
+        '''
+        for record in self:
+            self.ensure_one()
+            invoice = self.env['account.move'].search(
+                [('partner_id', '=', record.partner_id.id)])
+
+            record.amount = invoice[0].amount_residual
+
+    @api.depends('invoice_count')
+    def _compute_invoice_status(self):
+
 
     @api.model_create_multi
     def create(self, vals_list):
@@ -74,28 +99,26 @@ class HostelStudent(models.Model):
                                       next_by_code('hostel.student.sequence'))
         return super(HostelStudent, self).create(vals_list)
 
-
     def _compute_display_name(self):
         for record in self:
-            if record.partner_id :
+            if record.partner_id:
                 record.display_name = \
                     f"{record.student_id} - {record.partner_id.name}"
-                #Why use f string becuse only str to str concatination posible +
+                # Why use f string becuse only str to str concatination posible +
             else:
                 record.display_name = record.student_id + '-'
-
 
     def action_open_room_wizard(self):
         '''this fuction is used for the wizard calling purpose, it
         describes the view_mode also in there and describes context through
         value passing.'''
         return {
-                'type': 'ir.actions.act_window',
-                'name': 'list rooms available',
-                'res_model': 'wizard.available.room',
-                'view_mode': 'form',
-                'target': 'new',
-                'context': {'default_student_id': self.id},
+            'type': 'ir.actions.act_window',
+            'name': 'list rooms available',
+            'res_model': 'wizard.available.room',
+            'view_mode': 'form',
+            'target': 'new',
+            'context': {'default_student_id': self.id},
         }
 
     def vacate(self):
@@ -109,18 +132,18 @@ class HostelStudent(models.Model):
         if self.room_id:
             raise UserError(f'The student {self.name} cant be delete. '
                             f'{self.name} is already assigned to the '
-                             f'{self.room_id.display_name} room.')
+                            f'{self.room_id.display_name} room.')
 
     def student_invoice(self):
         '''
         this function is used for redirecting into another action and through
         that pass a domain also.
         '''
-        action = self.env["ir.actions.actions"]._for_xml_id("account.action_move_out_invoice_type")
-        action['domain'] = [('partner_id','=',self.partner_id.id)]
+        action = self.env["ir.actions.actions"]._for_xml_id(
+            "account.action_move_out_invoice_type")
+        action['domain'] = [('partner_id', '=', self.partner_id.id)]
         print(action)
         return action
-
 
 
 class ResPartner(models.Model):

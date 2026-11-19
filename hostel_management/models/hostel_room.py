@@ -1,5 +1,8 @@
 # -*- coding: utf-8 -*-
 from calendar import monthrange
+
+from dateutil.relativedelta import relativedelta
+
 from odoo import fields, models,api, _, Command
 
 from odoo.exceptions import UserError
@@ -91,65 +94,65 @@ class HostelRoom(models.Model):
     def cron_monthly_invoice(self):
         rooms = self.env['hostel.room'].search([('room_type', '!=', False)])
         for record in rooms:
-            for students in record.student_ids:
-                if not students.partner_id.invoice_ids:
-                    days = monthrange(year=students.student_ids.joining.year,
-                                      month=students.student_ids.joining.month)
-                    self.env['account.move'].create({
-                        'move_type': 'out_invoice',
-                        'partner_id': students.partner_id.id,
-                        'company_id': record.company_id.id,
-                        'room_id': record.id,
-                        'invoice_date': fields.Date.today(),
-                        'invoice_line_ids': [
-                            Command.create({
-                                'product_id': record.product_id.id,
-                                'price_unit': record.total_rent/days[1],
-                                'quantity': days[1]-students.student_ids.joining.day,
-                            })
-                        ]
-                    })
-                    print(students.name)
-                print(students)
-            print(record)
+            for student in record.student_ids:
+                invoice = record.env['account.move'].search([
+                    ('move_type', '=', 'out_invoice'),
+                    ('partner_id', '=', student.partner_id.id),
+                    ('room_id', '=', record.id), ])
+                monthstart = fields.Date.today().replace(day=1)
+
+                if not invoice:
+                    record.call(student,record)
+                else:
+                    if invoice[0].invoice_date < monthstart:
+                        record.call(student, record)
 
 
     def monthly_invoice(self):
         for record in self:
-            flags = 0
+            count = 0
             for student in record.student_ids:
-                if student.student_ids.partner_id.invoice_ids:
-                    flags +=1
-            for student in record.student_ids:
-                monthend = fields.Date.today()
-                monthend =monthend.replace(
-                    day=monthrange(
-                        year=monthend.year,
-                        month=monthend.month)[1])
-                print(monthend)
-                if student.student_ids.partner_id.invoice_ids:
-                    if student.student_ids.partner_id.invoice_ids.invoice_date < monthend:
-                        if flags == len(record.student_ids):
-                            raise UserError(f"The invoice already posted for "
-                                            f"{student.student_ids.name}.")
-                        print(student.student_ids.partner_id.invoice_ids)
+                invoice = record.env['account.move'].search([
+                    ('move_type', '=', 'out_invoice'),
+                    ('partner_id', '=', student.partner_id.id),
+                    ('room_id', '=', record.id),])
+                monthstart = fields.Date.today().replace(day=1)
+                if not invoice:
+                    record.call(student,record)
+                else:
+                    print(invoice[0].invoice_date)
+                    if invoice[0].invoice_date < monthstart:
+                        record.call(student,record)
+                    else:
+                        count +=1
+            if count == len(record.student_ids):
+                print(count)
+                raise UserError("invoice's for the student's is already "
+                                "generated for this month.")
 
-                days=monthrange(year=student.student_ids.joining.year,
-                                month=student.student_ids.joining.month)
-                print(days[1])
-                self.env['account.move'].create({
-                    'move_type': 'out_invoice',
-                    'partner_id': student.student_ids.partner_id.id,
-                    'company_id': self.company_id.id,
-                    'room_id': self.id,
-                    'invoice_date': fields.Date.today(),
-                    'invoice_line_ids': [
-                        Command.create({'product_id':self.product_id.id,
-                                        'price_unit':self.total_rent/days[1],
-                                        'quantity':days[1]-student.student_ids.joining.day,}),
-                    ]
+    def call(self,student,record):
+        day = monthrange(year=fields.Date.today().year,
+                         month=fields.Date.today().month)[1]
+        join_month = student.student_ids.joining.month
+        today_month = fields.Date.today().month
+        join_rent = day - student.student_ids.joining.day
+        self.env['account.move'].create({
+            'move_type': 'out_invoice',
+            'partner_id': student.partner_id.id,
+            'company_id': record.company_id.id,
+            'room_id': record.id,
+            'invoice_date': fields.Date.today(),
+            'invoice_line_ids': [
+                Command.create({
+                    'product_id': record.product_id.id,
+                    'price_unit': record.total_rent / day,
+                    'quantity': day if join_month < today_month else join_rent,
                 })
-            print(student.student_ids.name)
+            ]
+        })
+
+
+
 
     def room_invoices(self):
         '''

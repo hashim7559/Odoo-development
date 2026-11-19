@@ -12,17 +12,11 @@ class AccountMove(models.Model):
         invoice module
         '''
         res = super().action_post()
-        print(self.partner_id.name)
-        # self.action_print_pdf()
-        # print(a)
-        # attachment = self.action_send_and_print()
-        # self.action_send_and_print()
-        # print(attachment)
-        # print(self)
-        # email_value= { 'attachment_ids': attachment}
-
-        template = self.env.ref('hostel_management.email_template_data')
-        template.send_mail(self.id, force_send=True,)
+        if self.room_id:
+            print("hello12121")
+            print(self.partner_id.name)
+            template = self.env.ref('hostel_management.email_template_data')
+            template.send_mail(self.id, force_send=True,)
         return res
 
     room_id = fields.Many2one('hostel.room')

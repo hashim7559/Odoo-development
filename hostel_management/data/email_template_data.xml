@@ -12,5 +12,7 @@
             <p>this email for the confirmation about your invoice has
                 been posted!..</p>
         </field>
+        <field name="report_template_ids"
+               eval="[(4, ref('hostel_management.hostel_managemnt_invoice_report'))]"/>
     </record>
 </data></odoo>

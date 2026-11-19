@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from odoo import fields, models, api, _
+from odoo import fields, models, api, _,Command
 from odoo.exceptions import UserError
 
 
@@ -27,11 +27,12 @@ class HostelStudent(models.Model):
     room_id = fields.Many2one("hostel.room", string="Room",
                               readonly=True, copy=False)
     invoice_status = fields.Selection([('pending', 'Pending'),
-                                       ('paid', 'Paid'),],
+                                       ('done', 'Done'),],
                                       string="Invoice Status",
                                       compute='_compute_invoice_status')
     payment_status = fields.Selection([('not_paid', 'Not paid'),
-                                       ('paid', 'Paid'),])
+                                       ('paid', 'Paid'),],
+                                      compute='_compute_payment_status')
     invoice_count = fields.Integer(string="Invoice Count",
                                    compute='_compute_invoice_count')
     currency_id = fields.Many2one(comodel_name="res.currency",
@@ -67,7 +68,7 @@ class HostelStudent(models.Model):
     def _compute_invoice_count(self):
         for record in self:
             count = self.env['account.move'].search_count(
-                [('partner_id', '=',record.partner_id.id)])
+                [('partner_id', '=',record.partner_id.id),('move_type', '=', 'out_invoice')])
             record.invoice_count = count
 
     @api.depends('invoice_count')
@@ -78,15 +79,44 @@ class HostelStudent(models.Model):
         to if multiple invoices takes fist invoice amount.
         '''
         for record in self:
-            self.ensure_one()
             invoice = self.env['account.move'].search(
-                [('partner_id', '=', record.partner_id.id)])
-
-            record.amount = invoice[0].amount_residual
+                [('partner_id', '=',record.partner_id.id),('move_type', '=', 'out_invoice')])
+            if not invoice:
+                record.amount = record.room_id.total_rent
+            else:
+                record.amount = invoice[0].amount_residual
 
     @api.depends('invoice_count')
     def _compute_invoice_status(self):
+        for record in self:
+            invoice= self.env['account.move'].search([
+                ('partner_id', '=',record.partner_id.id),('move_type', '=', 'out_invoice')])
+            if not invoice:
+                record.invoice_status = False
+            else:
+                record.invoice_status = 'done'
+                state = invoice.mapped('state')
+                print(state)
+                if 'draft' in state:
+                    record.invoice_status = 'pending'
 
+    @api.depends('invoice_count')
+    def _compute_payment_status(self):
+        for record in self:
+            invoice = self.env['account.move'].search([
+                ('partner_id', '=',record.partner_id.id),('move_type', '=', 'out_invoice')])
+            if not invoice:
+                record.payment_status = False
+            else:
+                record.payment_status = 'not_paid'
+                status = invoice.mapped('status_in_payment')
+                count=0
+                for i in status:
+                    if i =='paid' or i=='in_payment':
+                        count += 1
+                if count == len(status):
+                    record.payment_status='paid'
+                print(count)
 
     @api.model_create_multi
     def create(self, vals_list):
@@ -141,10 +171,21 @@ class HostelStudent(models.Model):
         '''
         action = self.env["ir.actions.actions"]._for_xml_id(
             "account.action_move_out_invoice_type")
-        action['domain'] = [('partner_id', '=', self.partner_id.id)]
+        action['domain'] = [('partner_id', '=', self.partner_id.id),('move_type', '=', 'out_invoice')]
         print(action)
         return action
 
+    # def grand_access(self):
+    #     for record in self:
+    #         print(record.partner_id.name)
+    #         record.partner_id.action_grant_access()
+
+
+    # @api.model_create_multi
+    # def create(self, vals_list):
+    #     res = super().create(vals_list)
+    #     self.partner_id.action_grant_access(partner_id=self.partner_id.id)
+    #     return res
 
 class ResPartner(models.Model):
     '''this class represent res partner in the hotel management'''

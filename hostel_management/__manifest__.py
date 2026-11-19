@@ -17,9 +17,11 @@
     ],
     "data": [
         'data/sequence_data.xml',
+        'report/invoice_report.xml',
         'data/email_template_data.xml',
         'data/rental_product_demo.xml',
         'data/ir_cron_data.xml',
+
         'security/ir.access.csv',
         'view/hostel_room_views.xml',
         'view/hostel_facility_views.xml',

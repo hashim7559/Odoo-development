@@ -20,6 +20,9 @@
                 <field name="dob"/>
                 <field name="age"/>
                 <field name="company_id"/>
+                <field name="invoice_status" widget="badge"
+                        decoration-success="invoice_status == 'done'"
+                        decoration-danger="invoice_status == 'pending'"/>
             </list>
         </field>
     </record>
@@ -35,12 +38,17 @@
                        type="object"
                        invisible="room_id"
                        class="btn-primary"/>
+<!--                    <button name="grand_access"-->
+<!--                       string="grand access"-->
+<!--                       type="object"-->
+<!--                       class="btn-primary"/>-->
                     <button name="vacate"
                             string="Vacate"
                             type="object"
                             invisible="not room_id"
                             class="btn-primary"/>
-                    <field name="invoice_status" widget="statusbar" options="{'clickable': '1'}"/>
+                    <field name="invoice_status" widget="statusbar" />
+                    <field name="payment_status" widget="statusbar" />
 
 
                 </header>

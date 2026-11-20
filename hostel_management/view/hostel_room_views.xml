@@ -39,6 +39,9 @@
                     <field name="room_status" widget="statusbar" options="{'clickable': '1'}"/>
                 </header>
                 <sheet>
+                    <widget name="web_ribbon" title="In cleaning"
+                            bg_color="text-bg-danger"
+                            invisible="ribbon"/>
                     <div class="oe_button_box" name="button_box">
                         <button name="room_invoices" type="object"
                                 string="invoices"/>
@@ -50,6 +53,7 @@
                             <field name="bed_count"/>
                             <field name="base_rent"/>
                             <field name="total_rent"/>
+                            <field name="pending_amount"/>
                         </group>
                         <group>
                             <field name="facilities_id"
@@ -70,6 +74,7 @@
                                 <field name="email"/>
                             </list>
                         </field>
+<!--                    <field name="cleaning_ids"/>-->
                 </sheet>
                 <chatter/>
             </form>

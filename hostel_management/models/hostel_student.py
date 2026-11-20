@@ -118,17 +118,6 @@ class HostelStudent(models.Model):
                     record.payment_status='paid'
                 print(count)
 
-    @api.model_create_multi
-    def create(self, vals_list):
-        '''
-            this function consist sequence generation its uses the super also
-        '''
-        for vals in vals_list:
-            if vals.get('student_id', _('New')) == _('New'):
-                vals['student_id'] = (self.env['ir.sequence'].
-                                      next_by_code('hostel.student.sequence'))
-        return super(HostelStudent, self).create(vals_list)
-
     def _compute_display_name(self):
         for record in self:
             if record.partner_id:
@@ -153,8 +142,25 @@ class HostelStudent(models.Model):
 
     def vacate(self):
         '''this function is used for vacate the student from room.'''
+        self.cleaning_request()
         self.room_id = False
         self.joining = False
+
+
+    def cleaning_request(self):
+        print(self.room_id.bed_count)
+
+        print(self.room_id.student_count)
+        if self.room_id.student_count == 1:
+            cleaning_service = self.env['cleaning.service'].search([
+                ('room_id', '=', self.room_id.id),
+                ('stage', '!=', 'done')])
+            if not cleaning_service:
+                self.env['cleaning.service'].create({
+                    'room_id': self.room_id.id
+                })
+                self.room_id.message_post(body='cleaning request has been created.')
+                print("cleaning request has been created")
 
     @api.ondelete(at_uninstall=True)
     def _delete_student(self):
@@ -175,16 +181,33 @@ class HostelStudent(models.Model):
         print(action)
         return action
 
-    # def grand_access(self):
-    #     for record in self:
-    #         print(record.partner_id.name)
-    #         record.partner_id.action_grant_access()
+    def grand_access(self):
+        print(self.partner_id)
+        self.env['res.users'].create({
+            'name': self.partner_id.name,
+            'login': self.partner_id.email,
+            'email': self.partner_id.email,
+            'group_ids': [
+                Command.set(self.env.ref('base.group_portal').ids)]
+        })
 
+    @api.model_create_multi
+    def create(self, vals_list):
+        '''
+            this function consist sequence generation its uses the super also
+        '''
+        # self.grand_access()
+        for vals in vals_list:
+            if vals.get('student_id', _('New')) == _('New'):
+                vals['student_id'] = (self.env['ir.sequence'].
+                                      next_by_code('hostel.student.sequence'))
+        return super(HostelStudent, self).create(vals_list)
 
     # @api.model_create_multi
     # def create(self, vals_list):
     #     res = super().create(vals_list)
-    #     self.partner_id.action_grant_access(partner_id=self.partner_id.id)
+    #
+    #     self.grand_access()
     #     return res
 
 class ResPartner(models.Model):

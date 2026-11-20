@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from calendar import monthrange
+from email.policy import default
 
 from dateutil.relativedelta import relativedelta
 
@@ -43,6 +44,9 @@ class HostelRoom(models.Model):
     student_ids = fields.One2many(comodel_name="hostel.student",
                                   inverse_name="room_id", tracking=True,
                                   readonly=True,)
+    cleaning_ids = fields.One2many(comodel_name="cleaning.service",
+                                   inverse_name='room_id',)
+    ribbon = fields.Boolean(default=True, compute='_compute_ribbon')
     student_count = fields.Integer(string="students in room",
                                    compute="_compute_student_count", default=0)
     room_status = fields.Selection(selection=[
@@ -51,6 +55,9 @@ class HostelRoom(models.Model):
                                                 ("full", "Full")],
                                    string="Room Status", default="empty",
                                    compute="_compute_room_status", store=True)
+    pending_amount = fields.Monetary(string="Pending Amount",
+                                     currency_field='currency_id',
+                                     compute='_compute_pending_amount')
     product_id = fields.Many2one(comodel_name="product.product",
                                  default = lambda self: self.env['product.product'].search([('id', '=',204)], limit=1))
 
@@ -79,6 +86,33 @@ class HostelRoom(models.Model):
             self.room_status = "partial"
         else:
             self.room_status = "full"
+
+    @api.depends('student_ids')
+    def _compute_pending_amount(self):
+        for record in self:
+            unpaid_invoices = self.env['account.move'].search([
+                ('move_type', '=', 'out_invoice'),
+                ('room_id', '=', record.id),
+                ('status_in_payment', '!=' , 'paid'),
+                ('status_in_payment', '!=' , 'in_payment')])
+
+            record.pending_amount = sum(unpaid_invoices.mapped('amount_residual_signed'))
+
+
+    @api.depends('cleaning_ids')
+    def _compute_ribbon(self):
+        if self.cleaning_ids:
+            count =0
+            for record in self.cleaning_ids:
+                if record.stage == 'done':
+                    count += 1
+            if count == len(self.cleaning_ids):
+                self.ribbon = True
+            else:
+                self.ribbon = False
+        else:
+            self.ribbon = True
+
 
     @api.model_create_multi
     def create(self, vals_list):

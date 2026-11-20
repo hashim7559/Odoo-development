@@ -50,6 +50,9 @@
                                              'always_range': True,
                                              'min_date': 'today'}"
                                    readonly="status != 'new'"/>
+                            <field name="room_id"
+                                   readonly="status != 'new'"/>
+
                             <field name="to_date"
                                    readonly="status != 'new'"
                                    invisible="1"/>

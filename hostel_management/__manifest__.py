@@ -14,6 +14,7 @@
         'contacts',
         'product',
         'account',
+        'hr',
     ],
     "data": [
         'data/sequence_data.xml',
@@ -29,6 +30,7 @@
         'view/leave_request_views.xml',
         'wizard/available_room_views.xml',
         'view/res_partner_view.xml',
+        'view/cleaning_service_views.xml',
         'view/hostel_menus.xml',
 
     ],

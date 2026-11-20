@@ -16,6 +16,8 @@
                       action="hostel_facility_action"/>
             <menuitem id="leave_request_menu"
                       action="leave_request_view_action"/>
+            <menuitem id="cleaning_service_menu"
+                      action="cleaning_service_view_action"/>
             <menuitem id="available_rooms"
                       action="available_room_view_action"/>
         </menuitem>

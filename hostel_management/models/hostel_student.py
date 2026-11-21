@@ -165,10 +165,11 @@ class HostelStudent(models.Model):
     @api.ondelete(at_uninstall=True)
     def _delete_student(self):
         print("you cant delete student")
-        if self.room_id:
-            raise UserError(f'The student {self.name} cant be delete. '
-                            f'{self.name} is already assigned to the '
-                            f'{self.room_id.display_name} room.')
+        for record in self:
+            if record.room_id:
+                raise UserError(f'The student {record.name} cant be delete. '
+                                f'{record.name} is already assigned to the '
+                                f'{record   .room_id.display_name} room.')
 
     def student_invoice(self):
         '''
@@ -184,6 +185,7 @@ class HostelStudent(models.Model):
     def grand_access(self):
         print(self.partner_id)
         self.env['res.users'].create({
+            'partner_id': self.partner_id.id,
             'name': self.partner_id.name,
             'login': self.partner_id.email,
             'email': self.partner_id.email,
@@ -196,19 +198,11 @@ class HostelStudent(models.Model):
         '''
             this function consist sequence generation its uses the super also
         '''
-        # self.grand_access()
         for vals in vals_list:
             if vals.get('student_id', _('New')) == _('New'):
                 vals['student_id'] = (self.env['ir.sequence'].
                                       next_by_code('hostel.student.sequence'))
         return super(HostelStudent, self).create(vals_list)
-
-    # @api.model_create_multi
-    # def create(self, vals_list):
-    #     res = super().create(vals_list)
-    #
-    #     self.grand_access()
-    #     return res
 
 class ResPartner(models.Model):
     '''this class represent res partner in the hotel management'''

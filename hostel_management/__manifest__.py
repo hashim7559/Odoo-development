@@ -15,14 +15,16 @@
         'product',
         'account',
         'hr',
+        'base_automation',
     ],
     "data": [
         'data/sequence_data.xml',
+        'report/invoice_report_template.xml',
         'report/invoice_report.xml',
         'data/email_template_data.xml',
         'data/rental_product_demo.xml',
         'data/ir_cron_data.xml',
-
+        'data/ir_actions_server_data.xml',
         'security/ir.access.csv',
         'view/hostel_room_views.xml',
         'view/hostel_facility_views.xml',

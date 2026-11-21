@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 from calendar import monthrange
-from email.policy import default
 
 from dateutil.relativedelta import relativedelta
 
@@ -136,10 +135,10 @@ class HostelRoom(models.Model):
                 monthstart = fields.Date.today().replace(day=1)
 
                 if not invoice:
-                    record.call(student,record)
+                    record.invoicing(student,record)
                 else:
                     if invoice[0].invoice_date < monthstart:
-                        record.call(student, record)
+                        record.invoicing(student, record)
 
 
     def monthly_invoice(self):
@@ -152,11 +151,11 @@ class HostelRoom(models.Model):
                     ('room_id', '=', record.id),])
                 monthstart = fields.Date.today().replace(day=1)
                 if not invoice:
-                    record.call(student,record)
+                    record.invoicing(student,record)
                 else:
                     print(invoice[0].invoice_date)
                     if invoice[0].invoice_date < monthstart:
-                        record.call(student,record)
+                        record.invoicing(student,record)
                     else:
                         count +=1
             if count == len(record.student_ids):
@@ -164,7 +163,7 @@ class HostelRoom(models.Model):
                 raise UserError("invoice's for the student's is already "
                                 "generated for this month.")
 
-    def call(self,student,record):
+    def invoicing(self,student,record):
         day = monthrange(year=fields.Date.today().year,
                          month=fields.Date.today().month)[1]
         join_month = student.student_ids.joining.month

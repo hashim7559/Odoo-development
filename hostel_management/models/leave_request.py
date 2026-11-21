@@ -33,11 +33,9 @@ class LeaveRequest(models.Model):
 
 
     def _compute_display_name(self):
-        if self.student_id.partner_id.name:
-            self.display_name = (f"{self.student_id.partner_id.name}-"
-                                 f"({self.from_date})-({self.to_date})")
-        else:
-            self.display_name = f"({self.from_date})-({self.to_date})"
+        for record in self:
+            record.display_name = (f"{record.student_id.partner_id.name}-"
+                                   f"({record.from_date})-({record.to_date})")
 
     def approve(self):
         '''this function used to approve the leave request'''

@@ -46,7 +46,7 @@
                         <button name="room_invoices" type="object"
                                 string="invoices"/>
                     </div>
-                    <h1><field name="room_number"/></h1>
+                    <h1><field name="room_number" readonly="1"/></h1>
                     <group>
                         <group>
                             <field name="room_type"/>
@@ -85,10 +85,22 @@
         <field name="model">hostel.room</field>
         <field name="arch" type="xml">
             <search>
+                <field name="room_number"/>
+                <field name="room_type"/>
+                <field name="bed_count"/>
+                <field name="base_rent"/>
+                <field name="company_id"/>
+                <field name="currency_id"/>
+                <field name="facilities_id"/>
+                <field name="room_status"/>
+                <filter name="with facility"
+                        domain="[('facilities_id','!=',False)]"/>
                 <filter name="available"
                         domain="[('room_status','in',['empty','partial'])]"/>
                 <filter name="By bed count"
-                        context="{'group_by':'bed_count','residual_visible':True}"/>
+                        context="{'group_by':'bed_count'}"/>
+                <filter name="By room type"
+                        context="{'group_by':'room_type'}"/>
             </search>
         </field>
     </record>

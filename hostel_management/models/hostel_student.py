@@ -15,17 +15,20 @@ class HostelStudent(models.Model):
     _inherit = ['mail.thread', 'mail.activity.mixin']
 
     student_id = fields.Char(string="Student ID", required=True, copy=False,
-                             readonly=True, default='New')
+                              default='New')
     company_id = fields.Many2one(comodel_name="res.company", required=True,
                                  default=lambda self: self.env.company)
     partner_id = fields.Many2one("res.partner", required=True,
                                  ondelete='cascade', readonly=True)
-    dob = fields.Datetime(string="Student DOB")
-    age = fields.Integer(string="Student Age")
-    joining = fields.Date(String="Student Joining Date", readonly=True)
+    gender = fields.Selection([('male', 'Male'), ('female', 'Female')],
+                              'Gender')
+    dob = fields.Date(string="Student DOB")
+    age = fields.Integer(string="Student Age",compute='_compute_student_age')
+    address= fields.Char(string="Address")
+    joining = fields.Date(String="Student Joining Date")
 
     room_id = fields.Many2one("hostel.room", string="Room",
-                              readonly=True, copy=False)
+                              copy=False)
     invoice_status = fields.Selection([('pending', 'Pending'),
                                        ('done', 'Done'),],
                                       string="Invoice Status",
@@ -43,8 +46,8 @@ class HostelStudent(models.Model):
     leave_request_ids = fields.One2many('leave.request',
                                         'student_id')
 
-    @api.onchange('dob')
-    def compute_student_age(self):
+    @api.depends('dob')
+    def _compute_student_age(self):
         '''
             this function consist of the age calaculation with using date of
             birth and today's date this function also consider month.
@@ -58,13 +61,13 @@ class HostelStudent(models.Model):
                 month = record.dob.month
 
             age = fields.Date.today().year - year
-            if month < fields.Date.today().month:
+            if month > fields.Date.today().month:
                 record.age = age - 1
             else:
                 record.age = age
             print(fields.Date.today().month)
 
-    @api.depends()
+
     def _compute_invoice_count(self):
         for record in self:
             count = self.env['account.move'].search_count(

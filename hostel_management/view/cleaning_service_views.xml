@@ -12,7 +12,7 @@
             <list create="0" editable="bottom">
                 <field name="room_id"/>
                 <field name="start"/>
-                <field name="employee_id"/>
+                <field name="user_id"/>
                 <field name="stage"/>
                 <button name="assign" type="object" string="Assign"
                         class="btn-primary"
@@ -20,6 +20,7 @@
                 <button name="complete" type="object" string="Complete"
                         class="btn-primary"
                         invisible="stage in ['new','done']"/>
+                <field name="company_id"/>
             </list>
         </field>
     </record>

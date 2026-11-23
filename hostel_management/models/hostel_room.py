@@ -19,7 +19,7 @@ class HostelRoom(models.Model):
     _inherit = ['mail.thread', 'mail.activity.mixin']
 
     room_number = fields.Char(string="Room Number", required=True, copy=False,
-                              readonly=True, default= 'New', )
+                              readonly=False, default= 'New', )
     room_type = fields.Selection(selection=[
                                         ('single', 'Single'),
                                         ('double', 'Double')],
@@ -196,3 +196,4 @@ class HostelRoom(models.Model):
         action = self.env["ir.actions.actions"]._for_xml_id("account.action_move_out_invoice_type")
         action['domain'] = [('room_id','=', self.id)]
         return action
+

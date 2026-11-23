@@ -1,7 +1,8 @@
 id,name,model_id,group_id/id,operation,domain
-access.hostel.facility,hostel facility,hostel.facility,base.group_user,crud,
-access.hostel.room,hostel room,hostel.room,base.group_user,crud,
-access.hostel.student,hostel student,hostel.student,base.group_user,crud,
-access.leave.request,leave request,leave.request,base.group_user,crud,
-access.available.room,available room,wizard.available.room,base.group_user,crud,
-access.cleaning.service,cleaning service,cleaning.service,base.group_user,crud,
+access_available_room,available room,wizard.available.room,base.group_user,crud,
+access_hostel_room_warden,hostel room warden,hostel.room,group_warden_user,crud,"[('company_id', 'in', company_ids)]"
+access_hostel_student_warden,hostel student warden,hostel.student,group_warden_user,crud,"[('company_id', 'in', company_ids)]"
+access_hostel_facility_warden,hostel facility warden,hostel.facility,group_warden_user,crud,"[('company_id', 'in', company_ids)]"
+access_leave_request_warden,leave request warden,leave.request,group_warden_user,crud,"[('company_id', 'in', company_ids)]"
+access_cleaning_service_warden,cleaning service warden,cleaning.service,group_warden_user,crud,"[('company_id', 'in', company_ids)]"
+access_cleaning_service_staff,cleaning service staff,cleaning.service,group_staff_user,ru,"[('user_id', 'in', (user.id, False))]"

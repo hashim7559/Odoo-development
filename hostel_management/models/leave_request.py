@@ -30,6 +30,8 @@ class LeaveRequest(models.Model):
                                ('medical','Medical'),
                                ('personal','Personal'),
                                ('other','Other'),], required=True)
+    company_id = fields.Many2one('res.company',
+                                 default=lambda self: self.env.user.company_id)
 
 
     def _compute_display_name(self):

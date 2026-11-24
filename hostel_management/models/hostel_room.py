@@ -3,7 +3,7 @@ from calendar import monthrange
 
 from dateutil.relativedelta import relativedelta
 
-from odoo import fields, models,api, _, Command
+from odoo import fields, models,api, Command
 
 from odoo.exceptions import UserError
 
@@ -119,9 +119,8 @@ class HostelRoom(models.Model):
             this function consist sequence generation its uses the super also
         '''
         for vals in vals_list:
-            if vals.get('room_number', _('New')) == _('New'):
-                vals['room_number'] = (self.env['ir.sequence'].
-                                       next_by_code('hostel.room.sequence'))
+            if vals.get('room_number', 'New') == 'New':
+                vals['room_number'] = self.env['ir.sequence'].next_by_code('hostel.room.sequence')
         return super(HostelRoom, self).create(vals_list)
 
     def cron_monthly_invoice(self):

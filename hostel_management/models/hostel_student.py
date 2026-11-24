@@ -160,7 +160,8 @@ class HostelStudent(models.Model):
                 ('stage', '!=', 'done')])
             if not cleaning_service:
                 self.env['cleaning.service'].create({
-                    'room_id': self.room_id.id
+                    'room_id': self.room_id.id,
+                    'company_id': self.company_id.id,
                 })
                 self.room_id.message_post(body='cleaning request has been created.')
                 print("cleaning request has been created")

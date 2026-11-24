@@ -85,6 +85,7 @@ class LeaveRequest(models.Model):
             self.env['cleaning.service'].create({
                 'room_id': self.student_id.room_id.id,
                 'start': date,
+                'company_id': self.company_id.id,
             })
             print("cleaning request approved form leave request")
 

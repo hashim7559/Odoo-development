@@ -9,7 +9,7 @@
         <field name="name">cleaning.service.view.list</field>
         <field name="model">cleaning.service</field>
         <field name="arch" type="xml">
-            <list create="0" editable="bottom">
+            <list editable="bottom">
                 <field name="room_id"/>
                 <field name="start"/>
                 <field name="user_id"/>

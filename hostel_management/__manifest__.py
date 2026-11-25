@@ -17,6 +17,7 @@
         'base_automation',
     ],
     "data": [
+        'data/mail_activity_type_data.xml',
         'security/hostel_security.xml',
         'security/ir.access.csv',
         'data/sequence_data.xml',

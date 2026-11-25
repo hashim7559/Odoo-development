@@ -24,13 +24,29 @@ class CleaningService(models.Model):
             if not record.user_id:
                 record.user_id = self.env.user.id
             record.stage = 'assigned'
+            record.room_id.activity_schedule(
+                act_type_xmlid='hostel_management.mail_activity_data_cleaning',
+                summary=f'cleaning service for {record.room_id.display_name}',
+                user_id=record.user_id.id ,
+                date_deadline=record.start ,
+            )
 
     def complete(self):
         for record in self:
             record.stage = 'done'
 
 
-
+    # def create(self,vals_list):
+    #     print(vals_list)
+    #     room= vals_list['room_id']
+    #     rooms= self.env['hostel.room'].search([('id','=',room)])
+    #     rooms.activity_schedule(
+    #         act_type_xmlid='hostel_management.mail_activity_data_cleaning',
+    #                        summary=f'cleaning service for {rooms.display_name}',
+    #                        user_id=self.env.user.id,
+    #                        date_deadline=vals_list['start'] if vals_list['start'] else fields.Date.today(),
+    #                        )
+    #     return super().create(vals_list)
 
 
 

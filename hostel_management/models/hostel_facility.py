@@ -28,3 +28,10 @@ class HostelFacility(models.Model):
         for record in self:
             if record.monthly_charge == 0:
                 raise UserError("Monthly Charge is zero its need more than 0")
+
+    @api.model_create_multi
+    def create(self, record_values):
+        print("created facility")
+        # vals_dict['facility_name'] = vals_dict['facility_name'].upper()
+        print(record_values)
+        return super().create(record_values)

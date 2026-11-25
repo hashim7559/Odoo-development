@@ -9,9 +9,15 @@
         <field name="name">leave.request.view.calendar</field>
         <field name="model">leave.request</field>
         <field name="arch" type="xml">
-            <calendar date_start="from_date" date_stop="to_date">
-                <field name="student_id"/>
-                <field name="room_id"/>
+            <calendar
+                    date_start="from_date"
+                    date_stop="to_date"
+                    mode="month"
+                    quick_create="0"
+                    color="status"
+                    event_open_popup="true">
+                <field name="status" filters="1"/>
+                <field name="student_id" avatar_field="avatar_128"/>
             </calendar>
         </field>
     </record>

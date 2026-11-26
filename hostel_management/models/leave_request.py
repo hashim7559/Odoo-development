@@ -78,16 +78,24 @@ class LeaveRequest(models.Model):
                 self.create_request(mode(dates))
 
     def create_request(self,date):
-        cleaning_service = self.env['cleaning.service'].search([
-            ('room_id', '=', self.student_id.room_id.id),
-            ('stage', '!=', 'done')])
-        if not cleaning_service:
+        tolerance = self.env['ir.config_parameter'].sudo().get_int('cleaning_tolerance')
+        cleaning = self.env['cleaning.service'].search([('room_id', '=',
+                                                             self.room_id.id)])
+        if cleaning:
+            if cleaning[0].stage == 'done':
+                tolerance_date= cleaning[0].start.date() + relativedelta(days=tolerance)
+                if self.from_date > tolerance_date:
+                    self.env['cleaning.service'].create({
+                        'room_id': self.student_id.room_id.id,
+                        'start': date,
+                        'company_id': self.company_id.id,
+                    })
+                    print("cleaning request approved form leave request")
+
+        else:
             self.env['cleaning.service'].create({
                 'room_id': self.student_id.room_id.id,
                 'start': date,
                 'company_id': self.company_id.id,
             })
             print("cleaning request approved form leave request")
-
-
-

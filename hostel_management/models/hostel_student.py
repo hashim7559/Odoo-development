@@ -1,7 +1,9 @@
 # -*- coding: utf-8 -*-
+from datetime import date
 
 from odoo import fields, models, api, _,Command
 from odoo.exceptions import UserError
+from dateutil.relativedelta import relativedelta
 
 
 class HostelStudent(models.Model):
@@ -71,7 +73,8 @@ class HostelStudent(models.Model):
     def _compute_invoice_count(self):
         for record in self:
             count = self.env['account.move'].search_count(
-                [('partner_id', '=',record.partner_id.id),('move_type', '=', 'out_invoice')])
+                [('partner_id', '=',record.partner_id.id),
+                 ('move_type', '=', 'out_invoice')])
             record.invoice_count = count
 
     @api.depends('invoice_count')
@@ -83,7 +86,8 @@ class HostelStudent(models.Model):
         '''
         for record in self:
             invoice = self.env['account.move'].search(
-                [('partner_id', '=',record.partner_id.id),('move_type', '=', 'out_invoice')])
+                [('partner_id', '=',record.partner_id.id),
+                 ('move_type', '=', 'out_invoice')])
             if not invoice:
                 record.amount = record.room_id.total_rent
             else:
@@ -93,7 +97,8 @@ class HostelStudent(models.Model):
     def _compute_invoice_status(self):
         for record in self:
             invoice= self.env['account.move'].search([
-                ('partner_id', '=',record.partner_id.id),('move_type', '=', 'out_invoice')])
+                ('partner_id', '=',record.partner_id.id),
+                ('move_type', '=', 'out_invoice')])
             if not invoice:
                 record.invoice_status = False
             else:
@@ -107,7 +112,8 @@ class HostelStudent(models.Model):
     def _compute_payment_status(self):
         for record in self:
             invoice = self.env['account.move'].search([
-                ('partner_id', '=',record.partner_id.id),('move_type', '=', 'out_invoice')])
+                ('partner_id', '=',record.partner_id.id),
+                ('move_type', '=', 'out_invoice')])
             if not invoice:
                 record.payment_status = False
             else:
@@ -151,20 +157,42 @@ class HostelStudent(models.Model):
 
 
     def cleaning_request(self):
-        print(self.room_id.bed_count)
+        '''
+            this fuction maily used for creating a new cleaning request when
+            the student is vacate.
+            ensure room is empty.
+            take tolerance from settings and cleaning request's from cleaning module
+            already have -> stage is done on last -> check date+tolerance < today
+            -> create new cleaning request.
+            else no have cleaning request -> create new cleaning request.
 
-        print(self.room_id.student_count)
+        '''
+
         if self.room_id.student_count == 1:
-            cleaning_service = self.env['cleaning.service'].search([
-                ('room_id', '=', self.room_id.id),
-                ('stage', '!=', 'done')])
-            if not cleaning_service:
+            tolerance = self.env['ir.config_parameter'].sudo().get_int('cleaning_tolerance')
+            cleaning = self.env['cleaning.service'].search([('room_id', '=', self.room_id.id)])
+            today = date.today()
+            if cleaning:
+                if cleaning[0].stage == 'done':
+                    tolerance_date = cleaning[0].start.date() + relativedelta(days=tolerance)
+
+                    if today > tolerance_date:
+                        self.env['cleaning.service'].create({
+                            'room_id': self.room_id.id,
+                            'start': today,
+                            'company_id': self.company_id.id,
+                        })
+                        self.room_id.message_post(body='cleaning request has been created.')
+                        print("cleaning request approved form leave request")
+            else:
                 self.env['cleaning.service'].create({
                     'room_id': self.room_id.id,
+                    'start': today,
                     'company_id': self.company_id.id,
                 })
                 self.room_id.message_post(body='cleaning request has been created.')
-                print("cleaning request has been created")
+                print("cleaning request approved form leave request")
+
 
     @api.ondelete(at_uninstall=True)
     def _delete_student(self):
@@ -180,9 +208,9 @@ class HostelStudent(models.Model):
         this function is used for redirecting into another action and through
         that pass a domain also.
         '''
-        action = self.env["ir.actions.actions"]._for_xml_id(
-            "account.action_move_out_invoice_type")
-        action['domain'] = [('partner_id', '=', self.partner_id.id),('move_type', '=', 'out_invoice')]
+        action = self.env["ir.actions.actions"]._for_xml_id("account.action_move_out_invoice_type")
+        action['domain'] = [('partner_id', '=', self.partner_id.id),
+                            ('move_type', '=', 'out_invoice')]
         print(action)
         return action
 
@@ -212,4 +240,5 @@ class ResPartner(models.Model):
     '''this class represent res partner in the hotel management'''
     _inherit = 'res.partner'
 
-    student_ids = fields.One2many('hostel.student', 'partner_id')
+    student_ids = fields.One2many('hostel.student',
+                                  'partner_id')

@@ -11,15 +11,22 @@
             <menuitem id="invoice_menu"
                       action="account_move_1_view_action"/>
         </menuitem>
-        <menuitem id="hostel_submenu_2" name="Settings">
+        <menuitem id="hostel_submenu_2" name="Configuration">
+            <menuitem id="hostel_settings_menu"
+                      action="action_hostel_management_configuration"
+                      sequence="1"/>
             <menuitem id="hostel_facility_menu"
-                      action="hostel_facility_action"/>
+                      action="hostel_facility_action"
+                      sequence="2"/>
             <menuitem id="leave_request_menu"
-                      action="leave_request_view_action"/>
+                      action="leave_request_view_action"
+                      sequence="3"/>
             <menuitem id="cleaning_service_menu"
-                      action="cleaning_service_view_action"/>
+                      action="cleaning_service_view_action"
+                      sequence="4"/>
             <menuitem id="available_rooms"
-                      action="available_room_view_action"/>
+                      action="available_room_view_action"
+                      sequence="5"/>
         </menuitem>
     </menuitem>
 </odoo>

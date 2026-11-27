@@ -3,3 +3,8 @@ from.import hostel_room
 from.import hostel_facility
 from.import hostel_student
 from.import leave_request
+from.import account_move
+from.import cleaning_service
+from.import mail_activity
+from.import res_config_settings
+

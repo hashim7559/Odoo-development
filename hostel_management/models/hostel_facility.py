@@ -28,3 +28,5 @@ class HostelFacility(models.Model):
         for record in self:
             if record.monthly_charge == 0:
                 raise UserError("Monthly Charge is zero its need more than 0")
+
+

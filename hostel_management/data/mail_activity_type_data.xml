@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<odoo>
+    <data>
+        <record id="mail_activity_data_cleaning"
+                model="mail.activity.type">
+            <field name="name">Cleaning service</field>
+            <field name="summary">Cleanig service ass ben allocated.</field>
+            <field name="icon">check</field>
+            <field name="sequence">1</field>
+        </record>
+    </data>
+</odoo>

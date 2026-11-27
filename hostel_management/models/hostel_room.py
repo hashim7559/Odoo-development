@@ -1,5 +1,11 @@
 # -*- coding: utf-8 -*-
-from odoo import fields, models,api, _
+from calendar import monthrange
+
+from dateutil.relativedelta import relativedelta
+
+from odoo import fields, models,api, Command
+
+from odoo.exceptions import UserError
 
 class HostelRoom(models.Model):
     '''
@@ -10,10 +16,11 @@ class HostelRoom(models.Model):
     _name = "hostel.room"
     _description = "Hostel Room"
     _rec_name = 'room_number'
+    _check_company_auto = True
     _inherit = ['mail.thread', 'mail.activity.mixin']
 
     room_number = fields.Char(string="Room Number", required=True, copy=False,
-                              readonly=True, default= 'New', )
+                              readonly=False, default= 'New', )
     room_type = fields.Selection(selection=[
                                         ('single', 'Single'),
                                         ('double', 'Double')],
@@ -23,7 +30,9 @@ class HostelRoom(models.Model):
     base_rent = fields.Monetary(string="Base Rent",
                                 currency_field='currency_id')
     facilities_id = fields.Many2many('hostel.facility',
-                                     string="Facilities", tracking=1)
+                                     string="Facilities", tracking=1,
+                                     ondelete='restrict',
+                                     check_company=True,)
     total_rent = fields.Monetary(string="Total Rent",
                                  currency_field='currency_id',
                                  compute='_compute_total_rent',
@@ -35,7 +44,12 @@ class HostelRoom(models.Model):
                                   related="company_id.currency_id")
     student_ids = fields.One2many(comodel_name="hostel.student",
                                   inverse_name="room_id", tracking=True,
-                                  readonly=True,)
+                                  readonly=True,
+                                  )
+    cleaning_ids = fields.One2many(comodel_name="cleaning.service",
+                                   inverse_name='room_id',
+                                   )
+    ribbon = fields.Boolean(default=True, compute='_compute_ribbon')
     student_count = fields.Integer(string="students in room",
                                    compute="_compute_student_count", default=0)
     room_status = fields.Selection(selection=[
@@ -44,6 +58,14 @@ class HostelRoom(models.Model):
                                                 ("full", "Full")],
                                    string="Room Status", default="empty",
                                    compute="_compute_room_status", store=True)
+    pending_amount = fields.Monetary(string="Pending Amount",
+                                     currency_field='currency_id',
+                                     compute='_compute_pending_amount')
+    product_id = fields.Many2one(comodel_name="product.product",
+                                 default = lambda self:
+                                 self.env['product.product'].
+                                 search([('id', '=',204)],
+                                        limit=1))
 
     @api.depends('base_rent','total_rent','facilities_id')
     def _compute_total_rent(self):
@@ -71,13 +93,136 @@ class HostelRoom(models.Model):
         else:
             self.room_status = "full"
 
+    @api.depends('student_ids')
+    def _compute_pending_amount(self):
+        for record in self:
+            unpaid_invoices = self.env['account.move'].search([
+                ('move_type', '=', 'out_invoice'),
+                ('room_id', '=', record.id),
+                ('status_in_payment', '!=' , 'paid'),
+                ('status_in_payment', '!=' , 'in_payment')])
+
+            record.pending_amount = sum(unpaid_invoices.mapped('amount_residual_signed'))
+
+
+    @api.depends('cleaning_ids')
+    def _compute_ribbon(self):
+        if self.cleaning_ids:
+            count =0
+            for record in self.cleaning_ids:
+                if record.stage == 'done':
+                    count += 1
+            if count == len(self.cleaning_ids):
+                self.ribbon = True
+            else:
+                self.ribbon = False
+        else:
+            self.ribbon = True
+
+
     @api.model_create_multi
     def create(self, vals_list):
         '''
             this function consist sequence generation its uses the super also
         '''
         for vals in vals_list:
-            if vals.get('room_number', _('New')) == _('New'):
-                vals['room_number'] = (self.env['ir.sequence'].
-                                       next_by_code('hostel.room.sequence'))
+            if vals.get('room_number', 'New') == 'New':
+                vals['room_number'] = self.env['ir.sequence'].next_by_code('hostel.room.sequence')
         return super(HostelRoom, self).create(vals_list)
+
+    def cron_monthly_invoice(self):
+        '''
+        This funtion is trigerd on cron sheduled action.
+        if not invoice for students -> call invoicing function
+        else invoice date not this munth -> call invoicing function
+        '''
+        rooms = self.env['hostel.room'].search([('room_type', '!=', False)])
+        for record in rooms:
+            for student in record.student_ids:
+                invoice = record.env['account.move'].search([
+                    ('move_type', '=', 'out_invoice'),
+                    ('partner_id', '=', student.partner_id.id),
+                    ('room_id', '=', record.id), ])
+                monthstart = fields.Date.today().replace(day=1)
+
+                if not invoice:
+                    record.invoicing(student,record)
+                else:
+                    if invoice[0].invoice_date < monthstart:
+                        record.invoicing(student, record)
+
+
+    def monthly_invoice(self):
+        '''
+        this fucntion is trigerd on click object button.
+        if not invoice for students -> call invoicing function.
+        else invoice date not this month -> call invoicing function
+        else increace count
+        if count = student -> UserError
+        '''
+        for record in self:
+            count = 0
+            #@todo:filtered vs search
+            room_invoices = record.env['account.move'].search([
+                ('move_type', '=', 'out_invoice'),
+                ('room_id', '=', record.id), ])
+            for student in record.student_ids:
+                invoice = room_invoices.filtered(
+                    lambda inv: inv.partner_id.id == student.partner_id.id)
+
+
+                monthstart = fields.Date.today().replace(day=1)
+                if not invoice:
+                    record.invoicing(student,record)
+                else:
+                    print(invoice[0].invoice_date)
+                    if invoice[0].invoice_date < monthstart:
+                        record.invoicing(student,record)
+                    else:
+                        count +=1
+            if count == len(record.student_ids):
+                print(count)
+                raise UserError("invoice's for the student's is already "
+                                "generated for this month.")
+
+    def invoicing(self,student,record):
+        '''
+        this function is triggerd on previuse function.
+        param: student: entire students in room
+        param: record: entire records in room
+        '''
+        day = monthrange(year=fields.Date.today().year,
+                         month=fields.Date.today().month)[1]
+        #@fixme student.student_ids.joining
+        join_month = student.joining.month
+        today_month = fields.Date.today().month
+        join_rent = day - student.joining.day
+
+        self.env['account.move'].create({
+            'move_type': 'out_invoice',
+            'partner_id': student.partner_id.id,
+            'company_id': record.company_id.id,
+            'room_id': record.id,
+            'invoice_date': fields.Date.today(),
+            'invoice_line_ids': [
+                Command.create({
+                    'product_id': record.product_id.id,
+                    'price_unit': record.total_rent / day,
+                    'quantity': day if join_month < today_month else join_rent,
+                })
+            ]
+        })
+
+
+
+
+    def room_invoices(self):
+        '''
+            It's an action button. this function that helps to redirect to
+            the account move based on the sertain craitiria. they have one
+            domain for listing only the related fields.
+        '''
+        action = self.env["ir.actions.actions"]._for_xml_id("account.action_move_out_invoice_type")
+        action['domain'] = [('room_id','=', self.id)]
+        return action
+

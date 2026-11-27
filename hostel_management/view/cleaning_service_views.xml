@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<odoo>
+    <record id="cleaning_service_view_action" model="ir.actions.act_window">
+        <field name="name">Cleaning service</field>
+        <field name="res_model">cleaning.service</field>
+        <field name="view_mode">list,kanban,form</field>
+    </record>
+    <record id="cleaning_service_view_list" model="ir.ui.view">
+        <field name="name">cleaning.service.view.list</field>
+        <field name="model">cleaning.service</field>
+        <field name="arch" type="xml">
+            <list editable="bottom">
+                <field name="room_id"/>
+                <field name="start"/>
+                <field name="user_id"/>
+                <field name="stage"/>
+                <button name="assign" type="object" string="Assign"
+                        class="btn-primary"
+                        invisible="stage in ['assigned','done']"/>
+                <button name="complete" type="object" string="Complete"
+                        class="btn-primary"
+                        invisible="stage in ['new','done']"/>
+                <field name="company_id"/>
+            </list>
+        </field>
+    </record>
+</odoo>

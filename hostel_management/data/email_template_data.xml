@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo><data>
+    <record id="email_template_data" model="mail.template">
+        <field name="name">Invoice: posted!</field>
+        <field name="model_id"
+               ref="account.model_account_move"/>
+        <field name="email_from">{{ object.company_id.email_formatted }}</field>
+        <field name="subject">your invoice ref-{{ object.display_name }} as been posted</field>
+        <field name="use_default_to" eval="False"/>
+        <field name="email_to">{{ object.partner_id.email_formatted }}</field>
+        <field name="report_template_ids"
+               eval="[Command.link(ref('hostel_management.hostel_management_invoice_report'))]"/>
+        <field name="auto_delete" eval="False"/>
+        <field name="body_html" type="html">
+            <p>
+                Hi <t t-out="object.partner_id.name"/>,<br/><br/>
+                Your invoice ref-(<t t-out="object.display_name"/>) has been
+                posted on <t t-out="object.invoice_date"/>. Make the payment
+                as soon as possible.<br/>
+                amount - <t
+                t-out="object.amount_residual"/>
+                <br/><br/>
+                regards,<br/>
+                <t t-out="user.name"/><br/>
+                <t t-out="user.phone"/>
+            </p>
+        </field>
+    </record>
+</data></odoo>

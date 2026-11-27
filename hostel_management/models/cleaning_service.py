@@ -1,17 +1,21 @@
 # -*- coding: utf-8 -*-
 from dateutil.relativedelta import relativedelta
-from datetime import datetime
 
 from odoo import fields, models, api,Command
+from odoo.exceptions import UserError
+
 
 class CleaningService(models.Model):
+    '''
+    this class is for cleaning service in hostel management.
+    '''
     _name = 'cleaning.service'
     _description = 'Cleaning Service'
     _order = 'id desc'
 
     room_id = fields.Many2one('hostel.room')
 
-    start = fields.Datetime('Start Time')
+    start = fields.Datetime('Start Time', default=fields.Date.today())
     user_id = fields.Many2one('res.users')
     stage = fields.Selection([('new','New'),
                               ('assigned','Assigned'),
@@ -21,6 +25,10 @@ class CleaningService(models.Model):
                                  default=lambda self: self.env.user.company_id)
 
     def assign(self):
+        '''this method is for cleaning service in hostel management.
+         used for assigning the employee to cleaning service.
+         or self assigning employee to cleaning service.
+         also triger the activity to hostel room.'''
         for record in self:
             if not record.start:
                 record.start = fields.Datetime.now()
@@ -36,6 +44,11 @@ class CleaningService(models.Model):
             )
 
     def complete(self):
+        '''
+        this method is for cleaning service in hostel management.
+        used for when the service is done make as done.
+        and also in activity in room.
+        '''
         for record in self:
             record.stage = 'done'
             asd = record.env['mail.activity'].search([('cleaning_id', '=', record.id)])
@@ -44,25 +57,20 @@ class CleaningService(models.Model):
             asd.action_done()
             print(asd.state)
 
+    @api.onchange('start')
+    def _check_start(self):
+        for record in self:
+            tolerance = self.env['ir.config_parameter'].sudo().get_int('cleaning_tolerance')
+            service = self.env['cleaning.service'].search([('room_id', '=', record.room_id.id)])
+            print(service)
 
-    def create(self,vals_list):
-        res = super().create(vals_list)
-        print(12121212)
-        print(vals_list)
-        tolerance = self.env['ir.config_parameter'].sudo().get_int('cleaning_tolerance')
-        cleaning = self.env['cleaning.service'].search([
-                                        ('room_id', '=',vals_list['room_id'])])
-        for service in cleaning:
-            tolerance_date = service.start.date() + relativedelta(days=tolerance)
-            print(1212121212,tolerance_date)
-            start = vals_list['start']
-            print(start)
-            st = datetime.strptime('start', '%yyyy-%mm-%dd %H:%M:%S').date()
-            print(st)
-            # if tolerance_date>start:
-            #     print(123212)
-        print(cleaning)
-        return res
+            if service:
+                for rec in service:
+                    before = rec.start - relativedelta(days=tolerance)
+                    after = rec.start + relativedelta(days=tolerance)
+                    if before <= record.start <= after:
+                        raise UserError(f'Thy have already cleaning request '
+                                        f'on {rec.start}')
 
     def _compute_display_name(self):
         if self.id and self.user_id:

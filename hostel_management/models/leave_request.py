@@ -27,9 +27,9 @@ class LeaveRequest(models.Model):
                                    "status of you leave request",
                               default='new', tracking=True)
     leave_type= fields.Selection([('home','Home Visit'),
-                               ('medical','Medical'),
-                               ('personal','Personal'),
-                               ('other','Other'),], required=True)
+                                  ('medical','Medical'),
+                                  ('personal','Personal'),
+                                  ('other','Other'),], required=True)
     company_id = fields.Many2one('res.company',
                                  default=lambda self: self.env.user.company_id)
 
@@ -57,6 +57,13 @@ class LeaveRequest(models.Model):
 
 
     def cleaning_request(self):
+        '''
+        this function used to clean the leave request.
+        this function is called when the leave request is approved.
+        if only one student -> call create_request.
+        else find all request in that room mapp->check all student in leave
+        on one day -> call create_request.
+        '''
         if len(self.room_id.student_ids) == 1:
             self.create_request(self.from_date)
         else:
@@ -78,20 +85,22 @@ class LeaveRequest(models.Model):
                 self.create_request(mode(dates))
 
     def create_request(self,date):
+        '''
+        this function is called by previouse function.
+        check if the ahe cleaning in that room-> check with tolerence ->
+        create new cleaning request.
+        else not have request -> create new cleaning request.
+        '''
         tolerance = self.env['ir.config_parameter'].sudo().get_int('cleaning_tolerance')
         cleaning = self.env['cleaning.service'].search([('room_id', '=',
-                                                             self.room_id.id)])
+                                                         self.room_id.id)])
+        count = 0
         if cleaning:
-            if cleaning[0].stage == 'done':
-                tolerance_date= cleaning[0].start.date() + relativedelta(days=tolerance)
-                if self.from_date > tolerance_date:
-                    self.env['cleaning.service'].create({
-                        'room_id': self.student_id.room_id.id,
-                        'start': date,
-                        'company_id': self.company_id.id,
-                    })
-                    print("cleaning request approved form leave request")
-
+            for record in cleaning:
+                after = record.start.date() + relativedelta(days=tolerance)
+                before = record.start.date() - relativedelta(days=tolerance)
+                if not before <= date <=after:
+                    count += 1
         else:
             self.env['cleaning.service'].create({
                 'room_id': self.student_id.room_id.id,
@@ -99,3 +108,12 @@ class LeaveRequest(models.Model):
                 'company_id': self.company_id.id,
             })
             print("cleaning request approved form leave request")
+
+        if count == len(cleaning):
+            self.env['cleaning.service'].create({
+                'room_id': self.student_id.room_id.id,
+                'start': date,
+                'company_id': self.company_id.id,
+            })
+            print("cleaning request approved form leave request")
+

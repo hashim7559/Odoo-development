@@ -162,36 +162,41 @@ class HostelStudent(models.Model):
             the student is vacate.
             ensure room is empty.
             take tolerance from settings and cleaning request's from cleaning module
-            already have -> stage is done on last -> check date+tolerance < today
-            -> create new cleaning request.
-            else no have cleaning request -> create new cleaning request.
+            already have ->  check today is inbetween before and after -> count.
+            else no have cleaning request -> call create request().
+            if count = len ->  call create request().
 
         '''
-
         if self.room_id.student_count == 1:
             tolerance = self.env['ir.config_parameter'].sudo().get_int('cleaning_tolerance')
             cleaning = self.env['cleaning.service'].search([('room_id', '=', self.room_id.id)])
             today = date.today()
+            count = 0
             if cleaning:
-                if cleaning[0].stage == 'done':
-                    tolerance_date = cleaning[0].start.date() + relativedelta(days=tolerance)
-
-                    if today > tolerance_date:
-                        self.env['cleaning.service'].create({
-                            'room_id': self.room_id.id,
-                            'start': today,
-                            'company_id': self.company_id.id,
-                        })
-                        self.room_id.message_post(body='cleaning request has been created.')
-                        print("cleaning request approved form leave request")
+                for record in cleaning:
+                    after = record.start.date() + relativedelta(days=tolerance)
+                    before = record.start.date() - relativedelta(days=tolerance)
+                    if not before <= today <= after:
+                        count += 1
             else:
-                self.env['cleaning.service'].create({
-                    'room_id': self.room_id.id,
-                    'start': today,
-                    'company_id': self.company_id.id,
-                })
-                self.room_id.message_post(body='cleaning request has been created.')
-                print("cleaning request approved form leave request")
+                self.create_request(today)
+            if count == len(cleaning):
+                self.create_request(today)
+
+
+    def create_request(self,today):
+        '''
+        This function is used for creat a new cleaning request.
+        this function is called when no cleaning request & not within tolerance.
+        '''
+        self.env['cleaning.service'].create({
+            'room_id': self.room_id.id,
+            'start': today,
+            'company_id': self.company_id.id,
+        })
+        self.room_id.message_post(body='cleaning request has been created.')
+        print("cleaning request approved form leave request")
+
 
 
     @api.ondelete(at_uninstall=True)
@@ -215,6 +220,10 @@ class HostelStudent(models.Model):
         return action
 
     def grand_access(self):
+        '''
+        this method is used wen the new student is created curespondingly
+        create a portel user.
+        '''
         print(self.partner_id)
         self.env['res.users'].create({
             'partner_id': self.partner_id.id,

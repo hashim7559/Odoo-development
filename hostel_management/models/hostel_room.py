@@ -16,6 +16,7 @@ class HostelRoom(models.Model):
     _name = "hostel.room"
     _description = "Hostel Room"
     _rec_name = 'room_number'
+    _check_company_auto = True
     _inherit = ['mail.thread', 'mail.activity.mixin']
 
     room_number = fields.Char(string="Room Number", required=True, copy=False,
@@ -30,7 +31,8 @@ class HostelRoom(models.Model):
                                 currency_field='currency_id')
     facilities_id = fields.Many2many('hostel.facility',
                                      string="Facilities", tracking=1,
-                                     ondelete='restrict')
+                                     ondelete='restrict',
+                                     check_company=True,)
     total_rent = fields.Monetary(string="Total Rent",
                                  currency_field='currency_id',
                                  compute='_compute_total_rent',
@@ -42,9 +44,11 @@ class HostelRoom(models.Model):
                                   related="company_id.currency_id")
     student_ids = fields.One2many(comodel_name="hostel.student",
                                   inverse_name="room_id", tracking=True,
-                                  readonly=True,)
+                                  readonly=True,
+                                  )
     cleaning_ids = fields.One2many(comodel_name="cleaning.service",
-                                   inverse_name='room_id',)
+                                   inverse_name='room_id',
+                                   )
     ribbon = fields.Boolean(default=True, compute='_compute_ribbon')
     student_count = fields.Integer(string="students in room",
                                    compute="_compute_student_count", default=0)
@@ -58,7 +62,10 @@ class HostelRoom(models.Model):
                                      currency_field='currency_id',
                                      compute='_compute_pending_amount')
     product_id = fields.Many2one(comodel_name="product.product",
-                                 default = lambda self: self.env['product.product'].search([('id', '=',204)], limit=1))
+                                 default = lambda self:
+                                 self.env['product.product'].
+                                 search([('id', '=',204)],
+                                        limit=1))
 
     @api.depends('base_rent','total_rent','facilities_id')
     def _compute_total_rent(self):
@@ -124,6 +131,11 @@ class HostelRoom(models.Model):
         return super(HostelRoom, self).create(vals_list)
 
     def cron_monthly_invoice(self):
+        '''
+        This funtion is trigerd on cron sheduled action.
+        if not invoice for students -> call invoicing function
+        else invoice date not this munth -> call invoicing function
+        '''
         rooms = self.env['hostel.room'].search([('room_type', '!=', False)])
         for record in rooms:
             for student in record.student_ids:
@@ -141,13 +153,24 @@ class HostelRoom(models.Model):
 
 
     def monthly_invoice(self):
+        '''
+        this fucntion is trigerd on click object button.
+        if not invoice for students -> call invoicing function.
+        else invoice date not this month -> call invoicing function
+        else increace count
+        if count = student -> UserError
+        '''
         for record in self:
             count = 0
+            #@todo:filtered vs search
+            room_invoices = record.env['account.move'].search([
+                ('move_type', '=', 'out_invoice'),
+                ('room_id', '=', record.id), ])
             for student in record.student_ids:
-                invoice = record.env['account.move'].search([
-                    ('move_type', '=', 'out_invoice'),
-                    ('partner_id', '=', student.partner_id.id),
-                    ('room_id', '=', record.id),])
+                invoice = room_invoices.filtered(
+                    lambda inv: inv.partner_id.id == student.partner_id.id)
+
+
                 monthstart = fields.Date.today().replace(day=1)
                 if not invoice:
                     record.invoicing(student,record)
@@ -163,11 +186,18 @@ class HostelRoom(models.Model):
                                 "generated for this month.")
 
     def invoicing(self,student,record):
+        '''
+        this function is triggerd on previuse function.
+        param: student: entire students in room
+        param: record: entire records in room
+        '''
         day = monthrange(year=fields.Date.today().year,
                          month=fields.Date.today().month)[1]
-        join_month = student.student_ids.joining.month
+        #@fixme student.student_ids.joining
+        join_month = student.joining.month
         today_month = fields.Date.today().month
-        join_rent = day - student.student_ids.joining.day
+        join_rent = day - student.joining.day
+
         self.env['account.move'].create({
             'move_type': 'out_invoice',
             'partner_id': student.partner_id.id,
